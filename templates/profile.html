@@ -1,20 +1,20 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="h-[100vh] w-screen flex items-center relative justify-center">
+<div class="min-h-screen w-screen flex items-center justify-center pt-20 relative">
   <!-- Background Image -->
   <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[90%] z-0">
 
   <!-- User Profile Content -->
-  <div class="w-[50vw] bg-white bg-opacity-90 rounded-xl p-8 backdrop-blur-md z-10 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105">
+  <div class="w-[45vw] bg-white bg-opacity-90 rounded-xl p-10 backdrop-blur-md z-10 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 flex flex-col items-center">
     <!-- User Profile Header -->
-    <div class="flex items-center justify-center mb-6 gap-2">
-      <img src="../static/assets/user.png" alt="Profile Image" class="w-16 h-16 rounded-full shadow-md">
+    <div class="flex flex-col items-center mb-6 gap-2">
+      <img src="../static/assets/user.png" alt="Profile Image" class="w-20 h-20 rounded-full shadow-md border-4 border-gray-300">
       <p class="text-3xl font-bold text-gray-800">{{ name }}</p>
     </div>
 
     <!-- User Information -->
-    <div class="text-gray-800 space-y-4">
+    <div class="text-gray-800 space-y-4 w-full">
       {% set bg_colors = ["bg-pink-100", "bg-pink-200"] %}
       {% for label, value in {
           "Name": name,
@@ -31,16 +31,16 @@
           "Skincare Routine": skincare_routine,
           "Stress Level (0-5)": stress_level
       }.items() %}
-        <div class="px-4 flex justify-between items-center p-3 rounded-lg {{ bg_colors[loop.index0 % 2] }} shadow-sm">
-          <label class="font-semibold">{{ label }}:</label>
-          <span>{{ value }}</span>
+        <div class="flex justify-between items-center p-4 rounded-lg {{ bg_colors[loop.index0 % 2] }} shadow-sm border border-gray-300">
+          <label class="font-semibold text-lg">{{ label }}:</label>
+          <span class="text-gray-700 text-lg">{{ value }}</span>
         </div>
       {% endfor %}
     </div>
 
     <!-- Logout & Actions -->
-    <div class="text-center mt-6">
-      <a href="/bookappointment" class="text-white bg-blue-500 hover:bg-blue-700 px-6 py-2 rounded-lg shadow-md transition-all">Book Appointment</a>
+    <div class="text-center mt-8">
+      <a href="/bookappointment" class="text-white bg-blue-500 hover:bg-blue-700 px-6 py-3 rounded-lg shadow-md transition-all text-lg font-semibold">Book Appointment</a>
     </div>
   </div>
 </div>
