@@ -1,9 +1,10 @@
-scikit-learn
-inference_sdk
 flask
-roboflow
-opencv-python
+sqlite3
 pandas
-gunicorn
-supervision
+numpy
+opencv-python
 joblib
+werkzeug
+roboflow
+supervision
+inference-sdk
