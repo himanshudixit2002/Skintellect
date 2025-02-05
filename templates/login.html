@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+    
+    <div class="register-page">
+
+        <form action="/" class="register-container" method="post">
+
+
+            <h2>Log In</h2>
+            <p>Don't have an account? <a href="/register">Register Here.</a> </p>
+
+            <div class="saperator-box">
+                <div></div>
+                <span >OR</span>
+                <div></div>
+            </div>
+
+            <div class="form-component">
+                <input type="text" name="username" placeholder="Enter Your Username">
+            </div>
+            
+            <div class="form-component">
+                <input type="password" name="password" placeholder="Enter Your Password">
+            </div>
+            
+
+            <button type="submit">Log In</button>
+        </form>
+
+        <div class="right-content">
+            <h3>Welcome To</h3>
+            <h1>
+                Skintellect!
+            </h1>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

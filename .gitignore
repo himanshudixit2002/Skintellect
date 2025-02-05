@@ -1,0 +1,49 @@
+# Ignore Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+env/
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Ignore logs and database files
+*.log
+*.sqlite3
+*.db
+
+# Ignore environment variables and secrets
+.env
+*.key
+*.pem
+config.json
+secrets.json
+
+# Ignore model weights and checkpoints
+*.h5
+*.ckpt
+*.pth
+*.pt
+
+# Ignore dataset and output folders
+dataset/
+runs/
+output/
+results/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Docker & deployment files
+docker-compose.override.yml
+*.dockerfile
+
+# Ignore macOS and Linux system files
+.DS_Store
+*.swp

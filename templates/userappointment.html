@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Flask App{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        *{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            overflow-x:hidden;
+        }
+    </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+
+    <nav class="h-[10vh] shadow-md flex p-2 px-6 justify-between items-center">
+        <div class="text-xl font-semibold text-rose-500">Skintellect</div>
+        <ul class="flex items-center gap-8">
+            <a href="{{url_for('predict')}}">Face Analysis</a>
+            <a href="{{url_for('bookappointment')}}">BookAppointment</a>
+            <a href="{{url_for('userappoint')}}">Appointments</a>
+
+            <a href="{{url_for('profile')}}">Profile</a>
+            <a href="{{url_for('logout')}}">Logout</a>
+        </ul>
+    </nav>
+
+
+ <div class=" h-[100vh] w-full relative flex flex-col items-center justify-center ">
+    <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[90%] z-0">
+    
+    <div class="h-[70vh] w-full flex flex-col justify-center items-center gap-9 z-20">
+        <div class="h-[10vh] w-full flex items-center justify-center">
+            <h1 class="text-black text-6xl font-serif "><i class="fa-solid fa-calendar-check text-7xl text-black "></i> Doctor's Appointment's</h1>
+        </div>
+        <div id="appointmentsContainer" class="h-[80vh] w-4/5 bg-white bg-opacity-80  p-8 backdrop-blur-md rounded-xl  overflow-y-scroll shadow-2xl shadow-black flex flex-col">
+            
+
+        </div>
+
+
+    </div>
+
+
+
+ </div>  
+ <script>
+    var appointments = {{ all_appointments  | safe }};
+    console.log(appointments)
+    console.log(typeof(appointments))
+    var container = document.getElementById("appointmentsContainer");
+
+    // Iterate over the appointments array
+    appointments.forEach(function(appointment) {
+        // Create a new appointment div element
+        var appointmentDiv = document.createElement("div");
+        appointmentDiv.classList.add("h-auto", "w-full", "bg-slate-300", "mt-3", "rounded-xl", "border-black", "border-2", "p-3", "text-2xl", "font-serif","relative");
+         
+        var status;
+        if (appointment[8] == 0) {
+            status = "Pending";
+        } else {
+            status = "Accepted";
+        }
+        // Construct the content of the appointment div
+        var content = "<strong>Name:</strong> " + appointment[1] + "<br>" +
+                      "<strong>Email:</strong> " + appointment[2] + "<br>" +
+                      "<strong>Date:</strong> " + appointment[3] + "<br>" +
+                      "<strong>Skin type:</strong> " + appointment[4] + "<br>" +
+                      "<strong>status:</strong> " + status + "<br>" 
+
+                               
+                      
+                    var deleteIcon = document.createElement("i");
+                    deleteIcon.classList.add("fas", "fa-trash-alt", "cursor-pointer", "text-red-500", "ml-2","absolute" ,"top-4","right-4");
+                    deleteIcon.setAttribute("aria-hidden", "true");
+                
+                    // Add event listener to delete the appointment when delete icon is clicked
+                    deleteIcon.addEventListener("click", function() {
+                      handleDelete2(appointment)  // Remove the appointment div
+                        // You may add further logic here to handle deletion from your data structure
+                    }); 
+        // Set the content of the appointment div
+        appointmentDiv.innerHTML = content;
+        appointmentDiv.appendChild(deleteIcon);
+        // Append the appointment div to the container
+        container.appendChild(appointmentDiv);
+    });
+    function handleDelete2(appointment) {
+        // You can perform delete operation here
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/delete_user_request", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log("deleted successfully");
+                window.location.reload();
+                // You can perform additional actions if needed
+            }
+        };
+        xhr.send("id=" + appointment[0]);
+      
+    }
+
+</script>
+     
+</body>
+</html>
