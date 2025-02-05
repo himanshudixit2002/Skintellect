@@ -1,46 +1,77 @@
 import sqlite3
-from flask import Flask, jsonify, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from roboflow import Roboflow
-import json
-import os
-import uuid  
-import cv2
-import pandas as pd
-from joblib import load
-
-df = pd.read_csv(r"dataset/updated_skincare_products.csv")
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = '4545'
+app.secret_key = 'your_secret_key'
 DATABASE = 'app.db'
 
+# Initialize database and create tables
 def create_tables():
     with sqlite3.connect(DATABASE) as connection:
         cursor = connection.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          username TEXT UNIQUE NOT NULL,
-                          password TEXT NOT NULL,
-                          role TEXT NOT NULL)''')  # Added role column
+        
+        # Create a schema_version table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS schema_version (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                version INTEGER NOT NULL
+            )
+        ''')
 
-        cursor.execute('''CREATE TABLE IF NOT EXISTS appointment( 
-                       id INTEGER PRIMARY KEY AUTOINCREMENT,
-                       name TEXT ,
-                       email TEXT ,
-                       date TEXT, 
-                       skin TEXT,
-                       phone TEXT,
-                       age TEXT,
-                       address TEXT, 
-                       status BOOLEAN,
-                       username TEXT)''')
+        # Get the current schema version
+        cursor.execute('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1')
+        current_version = cursor.fetchone()
+
+        # Apply migrations based on schema version
+        if not current_version:
+            # If no version exists, assume this is the first migration
+            current_version = 0
+            cursor.execute('INSERT INTO schema_version (version) VALUES (0)')
+        else:
+            current_version = current_version[0]
+        
+        # Define migrations
+        migrations = [
+            '''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'patient'
+            )
+            ''',
+            '''
+            CREATE TABLE IF NOT EXISTS appointment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                email TEXT,
+                date TEXT,
+                skin TEXT,
+                phone TEXT,
+                age TEXT,
+                address TEXT,
+                status BOOLEAN,
+                username TEXT
+            )
+            '''
+        ]
+
+        # Apply any pending migrations
+        for index, migration in enumerate(migrations, start=1):
+            if index > current_version:
+                cursor.execute(migration)
+                cursor.execute('INSERT INTO schema_version (version) VALUES (?)', (index,))
+                print(f"Applied migration version {index}")
+        
+        connection.commit()
+
 
 def insert_user(username, password, role):
     with sqlite3.connect(DATABASE) as connection:
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", 
-                       (username, password, role))
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
         connection.commit()
 
 def get_user(username):
@@ -49,85 +80,64 @@ def get_user(username):
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         return cursor.fetchone()
 
-def insert_appointment_data(name, email, date, skin, phone, age, address, status, username):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute('''INSERT INTO appointment (name, email, date, skin, phone, age, address, status, username)
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                          (name, email, date, skin, phone, age, address, status, username))
-        connection.commit()
-
-def findallappointment():
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM appointment")
-        return cursor.fetchall()
-
-def update_appointment_status(appointment_id):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("UPDATE appointment SET status = ? WHERE id = ?", (True, appointment_id))
-        connection.commit()
-
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = get_user(username)
-
-        if user and check_password_hash(user[2], password):
-            session['username'] = username
-            session['role'] = user[3]  
-
-            if user[3] == "doctor":  # Check role
-                return redirect(url_for('allappoint'))
-            else:
-                return redirect(url_for('profile'))
-        return "Invalid username or password"
-
-    return render_template('login.html')
+def role_required(role):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if 'role' not in session or session['role'] != role:
+                return "Access Denied!", 403
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        role = request.form['role']  # Allow role selection
+        role = request.form['role']
         hashed_password = generate_password_hash(password)
 
         if get_user(username):
-            return "Username already exists."
+            return "Username already exists. Please choose another."
 
         insert_user(username, hashed_password, role)
         return redirect('/')
-
     return render_template('register.html')
 
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = get_user(username)
+        if user and check_password_hash(user[2], password):
+            session['username'] = username
+            session['role'] = user[3]
+            if user[3] == 'doctor':
+                return redirect('/doctor')
+            else:
+                return redirect('/profile')
+
+        return "Invalid username or password."
+    return render_template('login.html')
+
 @app.route('/doctor')
-def doctor():
-    if 'username' in session and session.get('role') == "doctor":
-        return render_template('doctor.html')
-    return redirect('/')
+@role_required('doctor')
+def doctor_dashboard():
+    appointments = []  # Replace with logic to fetch appointments from DB
+    return render_template('doctor.html', appointments=appointments)
 
-@app.route('/allappointments')
-def allappoint():
-    if 'username' in session and session.get('role') == "doctor":
-        all_appointments = findallappointment()
-        return render_template('doctor.html', appointments=json.dumps(all_appointments))
-    return redirect('/')
-
-@app.route("/update_status", methods=["POST"])
-def update_status():
-    if 'username' in session and session.get('role') == "doctor":
-        appointment_id = request.form.get("appointment_id")
-        update_appointment_status(appointment_id)
-        return "updated"
-    return "Unauthorized", 403
+@app.route('/profile')
+@role_required('patient')
+def profile():
+    return render_template('profile.html', name=session['username'])
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop('username', None)
+    session.pop('role', None)
     return redirect('/')
 
 if __name__ == '__main__':

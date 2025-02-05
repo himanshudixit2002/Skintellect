@@ -1,79 +1,58 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="min-h-screen w-screen flex items-center justify-center pt-20">
-    <div class="w-4/5 bg-white bg-opacity-90 rounded-xl p-8 backdrop-blur-md shadow-lg">
+<div class="min-h-screen w-screen flex items-center justify-center py-20 relative">
+    <div class="w-4/5 bg-white bg-opacity-95 rounded-xl p-8 backdrop-blur-md shadow-lg">
         <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">
             <i class="fa-solid fa-stethoscope"></i> Doctor's Appointments
         </h1>
-        <div id="appointmentsContainer" class="overflow-y-scroll h-[60vh] p-4 bg-gray-100 rounded-md"></div>
+        <div id="appointmentsContainer" class="overflow-y-auto h-[60vh] p-4 bg-gray-100 rounded-md"></div>
     </div>
 </div>
 
 <script>
-    var appointments = {{ appointments | safe }};
-    var container = document.getElementById("appointmentsContainer");
+    // Ensure that `appointments` is serialized into JSON format in the Python backend
+    const appointments = JSON.parse('{{ appointments | tojson | safe }}');
+    const container = document.getElementById("appointmentsContainer");
 
     if (appointments.length === 0) {
         container.innerHTML = `<p class="text-gray-500 text-center">No appointments available.</p>`;
     } else {
-        appointments.forEach(function(appointment) {
-            var appointmentDiv = document.createElement("div");
-            appointmentDiv.classList.add("p-4", "bg-white", "rounded-lg", "shadow-md", "mb-4");
+        appointments.forEach(appointment => {
+            const appointmentDiv = document.createElement("div");
+            appointmentDiv.classList.add("p-4", "bg-white", "rounded-lg", "shadow-md", "mb-4", "relative");
 
-            var status = appointment[8] == 0 ? "Pending" : "Accepted";
-            var content = `
+            const status = appointment[8] === 0 ? "Pending" : "Accepted";
+            appointmentDiv.innerHTML = `
                 <strong>Name:</strong> ${appointment[1]}<br>
                 <strong>Email:</strong> ${appointment[2]}<br>
                 <strong>Date:</strong> ${appointment[3]}<br>
-                <strong>Skin type:</strong> ${appointment[4]}<br>
-                <strong>Status:</strong> <span id="status-${appointment[0]}">${status}</span><br>
+                <strong>Skin Type:</strong> ${appointment[4]}<br>
+                <strong>Status:</strong> ${status}<br>
             `;
 
-            var checkIcon = document.createElement("i");
-            if (appointment[8] == 0) {
-                checkIcon.classList.add("fa-check", "text-green-500", "cursor-pointer", "absolute", "right-10");
-                checkIcon.onclick = function() {
-                    handleCheck(appointment);
-                };
-            }
-
-            var deleteIcon = document.createElement("i");
-            deleteIcon.classList.add("fa-trash-alt", "text-red-500", "cursor-pointer", "absolute", "right-4");
-            deleteIcon.onclick = function() {
-                handleDelete(appointment);
+            const deleteIcon = document.createElement("i");
+            deleteIcon.classList.add("fa-solid", "fa-trash-alt", "cursor-pointer", "text-red-500", "absolute", "right-4", "top-4");
+            deleteIcon.onclick = function () {
+                handleDelete(appointment[0]);
             };
 
-            appointmentDiv.innerHTML = content;
-            appointmentDiv.appendChild(checkIcon);
             appointmentDiv.appendChild(deleteIcon);
             container.appendChild(appointmentDiv);
         });
     }
 
-    function handleCheck(appointment) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/update_status", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                document.getElementById(`status-${appointment[0]}`).innerText = "Accepted";
-                alert("Appointment updated successfully!");
-            }
-        };
-        xhr.send("appointment_id=" + appointment[0]);
-    }
-
-    function handleDelete(appointment) {
-        var xhr = new XMLHttpRequest();
+    function handleDelete(appointmentId) {
+        const xhr = new XMLHttpRequest();
         xhr.open("POST", "/delete_user_request", true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
+                alert("Appointment deleted successfully!");
                 window.location.reload();
             }
         };
-        xhr.send("id=" + appointment[0]);
+        xhr.send("id=" + appointmentId);
     }
 </script>
 {% endblock %}

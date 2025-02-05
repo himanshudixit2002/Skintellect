@@ -11,14 +11,14 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f5f5f5;
+            background: linear-gradient(to right, #ff758c, #ff7eb3);
             font-family: Arial, sans-serif;
         }
         .register-page {
             display: flex;
             background: white;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             max-width: 800px;
             width: 100%;
@@ -31,33 +31,19 @@
             justify-content: center;
         }
         .register-container h2 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 10px;
             color: #333;
         }
         .register-container p {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #666;
         }
-        .saperator-box {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-        }
-        .saperator-box div {
-            flex: 1;
-            height: 1px;
-            background: #ccc;
-        }
-        .saperator-box span {
-            padding: 0 10px;
-            color: #777;
-        }
-        .form-component input {
+        .register-container .form-component input {
             width: 100%;
             padding: 12px;
             margin-top: 10px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid #ccc;
         }
         button {
@@ -65,10 +51,9 @@
             color: white;
             border: none;
             padding: 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            transition: background 0.3s;
             margin-top: 15px;
         }
         button:hover {
@@ -92,43 +77,17 @@
     </style>
 </head>
 <body>
-    
     <div class="register-page">
-
-        <form action="/register" class="register-container" method="post">
-            <h2>Sign Up</h2>
-            <p>Already have an account? <a href="/" style="color: #007bff;">Login Here.</a></p>
-
-            <div class="saperator-box">
-                <div></div>
-                <span>OR</span>
-                <div></div>
-            </div>
-
-            <div class="form-component">
-                <input type="text" name="name" placeholder="Enter Your Name" required>
-            </div>
-            <div class="form-component">
-                <input type="number" name="age" placeholder="Enter Your Age" required>
-            </div>
-            <div class="form-component">
-                <input type="text" name="username" placeholder="Enter Your Username" required>
-            </div>
-            <div class="form-component">
-                <input type="text" name="email" placeholder="Enter Your Email" required>
-            </div>
-            <div class="form-component">
-                <input type="password" name="password" placeholder="Enter Your Password" required>
-            </div>
-            
-            <button type="submit">Sign Up</button>
+        <form action="/register" method="post">
+            <h2>Register</h2>
+            <input type="text" name="username" placeholder="Enter Username" required>
+            <input type="password" name="password" placeholder="Enter Password" required>
+            <select name="role" required>
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+            </select>
+            <button type="submit">Register</button>
         </form>
-
-        <div class="right-content">
-            <h3>Welcome To</h3>
-            <h1>Skintellect!</h1>
-        </div>
-
     </div>
 </body>
 </html>
