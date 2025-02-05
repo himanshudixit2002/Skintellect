@@ -21,38 +21,38 @@ def create_tables():
     with sqlite3.connect(DATABASE) as connection:
         cursor = connection.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          username TEXT UNIQUE NOT NULL,
-                          password TEXT NOT NULL)''')
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL)''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS survey_responses (
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          user_id INTEGER NOT NULL,
-                          name TEXT NOT NULL,
-                          age TEXT NOT NULL,
-                          gender TEXT NOT NULL,
-                          concerns TEXT NOT NULL,
-                          acne_frequency TEXT NOT NULL,
-                          comedones_count TEXT NOT NULL,
-                          first_concern TEXT NOT NULL,
-                          cosmetic_usage TEXT NOT NULL,
-                          skin_reaction TEXT NOT NULL,
-                          skin_type TEXT NOT NULL,
-                          medications TEXT NOT NULL,
-                          skincare_routine TEXT NOT NULL,
-                          stress_level TEXT NOT NULL,
-                          FOREIGN KEY (user_id) REFERENCES users(id))''')
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        age TEXT NOT NULL,
+                        gender TEXT NOT NULL,
+                        concerns TEXT NOT NULL,
+                        acne_frequency TEXT NOT NULL,
+                        comedones_count TEXT NOT NULL,
+                        first_concern TEXT NOT NULL,
+                        cosmetic_usage TEXT NOT NULL,
+                        skin_reaction TEXT NOT NULL,
+                        skin_type TEXT NOT NULL,
+                        medications TEXT NOT NULL,
+                        skincare_routine TEXT NOT NULL,
+                        stress_level TEXT NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users(id))''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS appointment( 
-                       id INTEGER PRIMARY KEY AUTOINCREMENT,
-                       name TEXT ,
-                       email TEXT ,
-                       date TEXT, 
-                       skin TEXT,
-                       phone TEXT,
-                       age TEXT,
-                       address TEXT, 
-                       status BOOLEAN,
-                       username TEXT
-                       )''')
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT ,
+                        email TEXT ,
+                        date TEXT, 
+                        skin TEXT,
+                        phone TEXT,
+                        age TEXT,
+                        address TEXT, 
+                        status BOOLEAN,
+                        username TEXT
+                        )''')
 
 def insert_user(username, password):
     with sqlite3.connect(DATABASE) as connection:
@@ -64,7 +64,7 @@ def insert_appointment_data(name,email,date,skin,phone,age,address,status,userna
     conn = sqlite3.connect('app.db')
     c = conn.cursor()
     c.execute('''INSERT INTO appointment (name,email,date,skin,phone,age,address,status,username)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)''', ( name,email,date,skin,phone,age,address,status,username))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)''', ( name,email,date,skin,phone,age,address,status,username))
     conn.commit()
     conn.close()                    
 
@@ -101,7 +101,7 @@ def insert_survey_response(user_id, name, age, gender, concerns, acne_frequency,
     with sqlite3.connect(DATABASE) as connection:
         cursor = connection.cursor()
         cursor.execute("INSERT INTO survey_responses (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage, skin_reaction, skin_type, medications,skincare_routine,stress_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                       (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage, skin_reaction, skin_type, medications,skincare_routine,stress_level))
+                        (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage, skin_reaction, skin_type, medications,skincare_routine,stress_level))
         connection.commit()
 
 def init_app():
@@ -208,21 +208,23 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        name = request.form['name']
-        age = request.form['age']  # Assuming you have an age field in the registration form
+        name = request.form.get('name', '')  # Get name from form
+        age = request.form.get('age', '')  # Get age from form
         hashed_password = generate_password_hash(password)
 
         if get_user(username):
             return "Username already exists. Please choose a different one."
 
         insert_user(username, hashed_password)
+        
         # Store name and age in session
+        session['username'] = username  # Store the user in session
         session['name'] = name
         session['age'] = age
         
         return redirect('/')
-
     return render_template('register.html')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -234,26 +236,32 @@ def login():
         if user and check_password_hash(user[2], password):
             session['username'] = username
             user_id = user[0]
-            if username=='doctor1':
-                return redirect(url_for('allappoint'))
-            else :
-                survey_response = get_survey_response(user_id)
-                if survey_response:
-                    return redirect('/profile')
-                else:
-                    # If the user hasn't completed the survey, redirect them to the survey page
-                    return redirect('/survey')
 
-        return "Invalid username or password"
+            # Check if the user is a doctor
+            if username == 'doctor1':
+                return redirect(url_for('allappoint'))
+            
+            # Check if the user has taken the survey
+            survey_response = get_survey_response(user_id)
+            if survey_response:
+                return redirect('/profile')
+            else:
+                return redirect('/survey')
+
+        return "Invalid username or password", 400 
 
     return render_template('login.html')
 
+
 @app.route('/survey', methods=['GET', 'POST'])
 def survey():
+    if 'username' not in session:
+        return redirect('/')  # Redirect to login if not in session
+
     if request.method == 'POST':
         user_id = get_user(session['username'])[0]
-        name = session.get('name', '')
-        age = session.get('age', '')
+        name = session.get('name', '')  # Default to empty string if not set
+        age = session.get('age', '')  # Default to empty string if not set
         gender = request.form['gender']
         concerns = ",".join(request.form.getlist('concerns'))
         acne_frequency = request.form['acne_frequency']
@@ -269,7 +277,11 @@ def survey():
         insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
         return redirect(url_for('profile'))
 
-    return render_template('survey.html', name=session.get('name'), age=session.get('age'), occupation=session.get('occupation'))
+    return render_template('survey.html', 
+                            name=session.get('name', ''), 
+                            age=session.get('age', ''), 
+                            occupation=session.get('occupation', ''))
+
 
 
 def get_survey_response(user_id):
@@ -294,23 +306,23 @@ def profile():
         survey_response = get_survey_response(user_id)
         if survey_response:
             return render_template('profile.html', 
-                                   name=survey_response[2],
-                                   age=survey_response[3],
-                                   gender=survey_response[4],
-                                   concerns=survey_response[5],
-                                   acne_frequency=survey_response[6],
-                                   comedones_count=survey_response[7],
-                                   first_concern=survey_response[8],
-                                   cosmetics_usage=survey_response[9],
-                                   skin_reaction=survey_response[10],
-                                   skin_type_details=survey_response[11],
-                                   medications=survey_response[12],
-                                   skincare_routine=survey_response[13],
-                                   stress_level=survey_response[14],
+                                name=survey_response[2],
+                                age=survey_response[3],
+                                gender=survey_response[4],
+                                concerns=survey_response[5],
+                                acne_frequency=survey_response[6],
+                                comedones_count=survey_response[7],
+                                first_concern=survey_response[8],
+                                cosmetics_usage=survey_response[9],
+                                skin_reaction=survey_response[10],
+                                skin_type_details=survey_response[11],
+                                medications=survey_response[12],
+                                skincare_routine=survey_response[13],
+                                stress_level=survey_response[14],
                                 #   monthly_spending=survey_response[15],
-                                  # technology_improvement=survey_response[16],
-                                  # heard_about_AI=survey_response[17],
-                                  )
+                                # technology_improvement=survey_response[16],
+                                # heard_about_AI=survey_response[17],
+                                )
     return redirect('/')
 
 
@@ -321,7 +333,7 @@ def logout():
 
 @app.route('/bookappointment')
 def bookappointment():
-   return render_template('bookappointment.html')
+    return render_template('bookappointment.html')
 
 @app.route("/appointment",methods=["POST"])
 def appointment():
@@ -365,7 +377,7 @@ def update_status():
         
         update_appointment_status(appointment_id)
         print("appointment_id")
-      
+    
         return "updated"
 @app.route("/doctor")
 def doctor():
