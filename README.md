@@ -55,5 +55,22 @@ python app.py
 - Custom CNN for skin analysis (model/final_model.h5)
 - YOLOv8n for lesion detection (runs/train32/ weights)
 
-## License 📄
-MIT License - See [LICENSE](LICENSE) for details
+## Deployment 🚀
+
+AWS EC2 Deployment Guide:
+1. Launch EC2 instance with Ubuntu 22.04 LTS
+2. Configure security groups to allow HTTP/HTTPS traffic
+3. Connect via SSH and install requirements:
+```bash
+sudo apt update && sudo apt install python3-pip nginx
+pip install -r requirements_updated.txt
+```
+4. Configure Nginx reverse proxy for Flask app
+5. Set up production WSGI server:
+```bash
+gunicorn -w 4 app:app
+```
+6. Configure domain `himanshudixit.info` in Nginx
+7. Enable automatic restart with systemd service
+
+Access live at: [https://himanshudixit.info](https://himanshudixit.info)
