@@ -1,21 +1,21 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="min-h-screen w-screen flex items-center justify-center pt-32 pb-16 relative">
+<div class="min-h-screen w-screen flex items-center justify-center py-20 relative">
   <!-- Background Image -->
-  <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[75%] z-0">
+  <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[85%] z-0">
 
   <!-- User Profile Content -->
-  <div class="w-[45vw] bg-white bg-opacity-95 rounded-2xl p-10 backdrop-blur-md z-10 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex flex-col items-center border border-gray-300 relative">
+  <div class="w-[60%] max-w-[800px] bg-white bg-opacity-95 rounded-xl p-8 backdrop-blur-md z-10 shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 flex flex-col items-center border border-gray-300 relative">
     <!-- User Profile Header -->
     <div class="flex flex-col items-center mb-6 gap-4">
       <img src="../static/assets/user.png" alt="Profile Image" class="w-24 h-24 rounded-full shadow-lg border-4 border-gray-400">
-      <p class="text-4xl font-extrabold text-gray-800">{{ name }}</p>
+      <p class="text-3xl font-extrabold text-gray-800">{{ name }}</p>
     </div>
 
     <!-- User Information -->
     <div class="text-gray-800 space-y-4 w-full">
-      {% set bg_colors = ["bg-gray-100", "bg-gray-200"] %}
+      {% set bg_colors = ["bg-pink-100", "bg-pink-200"] %}
       {% for label, value in {
           "Name": name,
           "Age": age,
@@ -31,7 +31,7 @@
           "Skincare Routine": skincare_routine,
           "Stress Level (0-5)": stress_level
       }.items() %}
-        <div class="flex justify-between items-center p-5 rounded-xl {{ bg_colors[loop.index0 % 2] }} shadow-md border border-gray-300 text-lg">
+        <div class="flex justify-between items-center p-5 rounded-lg {{ bg_colors[loop.index0 % 2] }} shadow-sm border border-gray-300 text-lg">
           <label class="font-semibold text-gray-700">{{ label }}:</label>
           <span class="text-gray-900 font-medium">{{ value }}</span>
         </div>
@@ -39,7 +39,7 @@
     </div>
 
     <!-- Logout & Actions -->
-    <div class="text-center mt-10">
+    <div class="text-center mt-8">
       <a href="/bookappointment" class="text-white bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 px-8 py-4 rounded-lg shadow-lg transition-all text-xl font-bold">Book Appointment</a>
     </div>
   </div>
