@@ -5,53 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .register-page {
+            display: flex;
+            background: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+        }
+        .register-container {
+            padding: 40px;
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .register-container h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .register-container p {
+            margin-bottom: 15px;
+            color: #666;
+        }
+        .saperator-box {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .saperator-box div {
+            flex: 1;
+            height: 1px;
+            background: #ccc;
+        }
+        .saperator-box span {
+            padding: 0 10px;
+            color: #777;
+        }
+        .form-component input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .right-content {
+            background: linear-gradient(to right, #ff758c, #ff7eb3);
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+        .right-content h1 {
+            font-size: 32px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     
     <div class="register-page">
 
         <form action="/register" class="register-container" method="post">
-
-
             <h2>Sign Up</h2>
-            <p>Already have an account? <a href="/">Login Here.</a> </p>
+            <p>Already have an account? <a href="/" style="color: #007bff;">Login Here.</a></p>
 
             <div class="saperator-box">
                 <div></div>
-                <span >OR</span>
+                <span>OR</span>
                 <div></div>
             </div>
 
             <div class="form-component">
-                <input type="text" name="name" placeholder="Enter Your Name">
+                <input type="text" name="name" placeholder="Enter Your Name" required>
             </div>
             <div class="form-component">
-                <input type="number" name="age" placeholder="Enter Your Age">
+                <input type="number" name="age" placeholder="Enter Your Age" required>
             </div>
             <div class="form-component">
-                <input type="text" name="username" placeholder="Enter Your Username">
+                <input type="text" name="username" placeholder="Enter Your Username" required>
             </div>
             <div class="form-component">
-                <input type="text" name="email" placeholder="Enter Your Email">
+                <input type="text" name="email" placeholder="Enter Your Email" required>
             </div>
             <div class="form-component">
-                <input type="password" name="password" placeholder="Enter Your Password">
+                <input type="password" name="password" placeholder="Enter Your Password" required>
             </div>
             
-
             <button type="submit">Sign Up</button>
         </form>
 
         <div class="right-content">
             <h3>Welcome To</h3>
-            <h1>
-                Skintellect!
-            </h1>
+            <h1>Skintellect!</h1>
         </div>
 
     </div>
-
 </body>
-
 </html>

@@ -5,18 +5,24 @@
     .predictions-container, .recommendations-container {
         background: #fff;
         padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         margin-top: 20px;
         width: 80%;
         max-width: 600px;
-        display:active;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .predictions-container:hover, .recommendations-container:hover {
+        transform: scale(1.05);
     }
 
     .condition-title {
-        color: #333;
+        color: #222;
         font-weight: bold;
-        margin-top: 10px;
+        margin-bottom: 10px;
+        font-size: 22px;
+        text-align: center;
     }
 
     .product-list {
@@ -25,46 +31,53 @@
     }
 
     .product-list li {
-        padding: 8px;
+        padding: 10px;
         border-bottom: 1px solid #eee;
         margin-bottom: 5px;
+        font-size: 16px;
     }
 
     .product-list li:last-child {
         border-bottom: none;
     }
-    .span{
-        font-size:20px;
+
+    .span {
+        font-size: 18px;
         font-weight: bold;
-        font-family:serif;
+        font-family: serif;
     }
 </style>
-<div class="min-h-[90vh] w-screen flex items-center relative justify-center">
-    <!-- Background Image -->
-    <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[90%] z-0">
 
-    <div class="my-12 w-[50vw] bg-white bg-opacity-80 rounded-xl p-8 backdrop-blur-md z-10">
-        <h1 class="text-[40px] leading-[45px] fon-bold">Upload Your Image</h1>
-        <p class="text-zinc-500 mt-1">Get Expert AI evaluations of your skin.</p>
-        <form class="" action="/predict" method="post" enctype="multipart/form-data">
-            <div class="my-6 w-full p-12 rounded-2xl border-pink-500 border-2 border-dashed flex flex-col gap-4 justify-center items-center">
+<div class="min-h-[90vh] w-screen flex items-center justify-center relative">
+    <img src="../static/assets/bg.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-75 z-0">
+
+    <div class="my-12 w-[50vw] bg-white bg-opacity-90 rounded-xl p-10 backdrop-blur-md shadow-2xl z-10 transition-transform transform hover:scale-105">
+        <h1 class="text-4xl font-bold font-serif text-gray-800 text-center">Upload Your Image</h1>
+        <p class="text-gray-600 mt-2 text-center">Get Expert AI evaluations of your skin.</p>
+        
+        <form action="/predict" method="post" enctype="multipart/form-data" class="flex flex-col gap-6 items-center">
+            <div class="my-6 w-full p-12 rounded-2xl border-2 border-pink-500 border-dashed flex flex-col gap-4 justify-center items-center hover:bg-pink-100 transition-all cursor-pointer">
                 <input id="file" class="hidden" type="file" name="image" accept="image/*" required>
                 <p class="text-center text-lg"><span onclick="handleFileClick()" class="text-blue-500 font-semibold underline text-xl">Click Here</span> To Select File</p>
-                <p class="mt-4 text-sm hidden" id="file-selected"> File Selected!</p>
+                <p class="mt-4 text-sm hidden text-green-600 font-semibold" id="file-selected"> File Selected!</p>
             </div>
-            <button class="px-6 py-2 text-white text-lg font-semibold bg-pink-500 hover:bg-pink-600 rounded-xl" type="submit">Predict</button>
+            <button class="px-6 py-2 text-white text-lg font-semibold bg-pink-500 hover:bg-pink-600 rounded-xl shadow-md transition-all duration-300">Predict</button>
         </form>
+
         <div class="predictions-container">
             <h2 class="condition-title">Predictions:</h2>
             <ul id="prediction" class="product-list"></ul>
         </div>
+
         <div class="recommendations-container">
             <h2 class="condition-title">Recommendations:</h2>
             <ul id="recommendations" class="product-list"></ul>
         </div>
-        <img src="" id="image" alt="" class="hidden mt-4 h-[400px] w-full object-fit">
+        
+        <img src="" id="image" alt="" class="hidden mt-4 h-[400px] w-full object-contain rounded-xl shadow-lg">
     </div>
 </div>
+
 <script>
     var data = '{{ data | tojson | safe }}';
     const jsonData = JSON.parse(data);
@@ -75,8 +88,8 @@
         fileInput.click();
     }
     fileInput.addEventListener('change', () => {
-        document.getElementById('file-selected').classList.toggle('hidden');
-    })
+        document.getElementById('file-selected').classList.remove('hidden');
+    });
 
     document.addEventListener("DOMContentLoaded", () => {
         const predictionContainer = document.getElementById('prediction');
@@ -90,9 +103,8 @@
         jsonData.recommendations.forEach(item => {
             const condition = item[0];
             const products = item[1];
-            console.log(item)
+            console.log(item);
             const conditionItem = document.createElement('li');
-        
             conditionItem.innerHTML = `<strong>${condition} :</strong> `;
             products.forEach(product => {
                 const productItem = document.createElement('li');
@@ -108,11 +120,11 @@
             });
             recommendationContainer.appendChild(conditionItem);
         });
-        // Check if there are any classes and the image element is present
+
         if (jsonData.classes && jsonData.classes.length > 0) {
             const img = document.getElementById('image');
             if (img) {
-                img.src = "/static/annotations_0.jpg"; // Adjusted to a more reliable path
+                img.src = "/static/annotations_0.jpg";
                 img.classList.remove('hidden');
             }
         }
