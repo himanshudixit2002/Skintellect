@@ -11,8 +11,29 @@
 </div>
 
 <script>
-    var appointments = {{ appointments | safe }};
-    var container = document.getElementById("appointmentsContainer");
+    const appointments = JSON.parse('{{ appointments | tojson | safe }}');
+    const container = document.getElementById("appointmentsContainer");
+
+    async function updateStatus(appointmentId, action) {
+        if (!confirm(`Are you sure you want to ${action} this appointment?`)) return;
+        try {
+            const response = await fetch(`/appointment/${appointmentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: action === 'approve' ? 1 : 2 })
+            });
+
+            if (response.ok) {
+                location.reload(); // Refresh to show updated list
+            } else {
+                alert('Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 
     if (appointments.length === 0) {
         container.innerHTML = `<p class="text-gray-500 text-center">No appointments available.</p>`;
@@ -26,6 +47,16 @@
                 <strong>Email:</strong> ${appointment[2]}<br>
                 <strong>Date:</strong> ${appointment[3]}<br>
                 <strong>Skin Type:</strong> ${appointment[4]}<br>
+                <div class="mt-3 flex gap-2">
+                    <button onclick="updateStatus(${appointment.id}, 'approve')"
+                        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        Approve
+                    </button>
+                    <button onclick="updateStatus(${appointment.id}, 'reject')"
+                        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                        Reject
+                    </button>
+                </div>
             `;
 
             appointmentDiv.innerHTML = content;

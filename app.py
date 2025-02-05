@@ -3,8 +3,9 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
+import os
 app = Flask(__name__)
-app.secret_key = '4545'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key')
 DATABASE = 'app.db'
 
 
@@ -17,7 +18,7 @@ def create_tables():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('patient', 'doctor'))
+                role TEXT NOT NULL CHECK(role IN ('patient', 'doctor')) DEFAULT 'patient'
             )
         ''')
         cursor.execute('''
@@ -30,7 +31,7 @@ def create_tables():
                 phone TEXT,
                 age TEXT,
                 address TEXT,
-                status BOOLEAN DEFAULT 0,
+                status INTEGER DEFAULT 0,  -- 0=Pending, 1=Approved, 2=Rejected
                 username TEXT
             )
         ''')
@@ -104,7 +105,12 @@ def login():
 @app.route('/doctor')
 @role_required('doctor')
 def doctor_dashboard():
-    return render_template('doctor.html')
+    with sqlite3.connect(DATABASE) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM appointment WHERE status = 0")
+        appointments = [dict(row) for row in cursor.fetchall()]
+    return render_template('doctor.html', appointments=appointments)
 
 
 @app.route('/profile')
@@ -119,6 +125,19 @@ def logout():
     session.pop('role', None)
     return redirect('/')
 
+@app.route('/appointment/<int:appointment_id>', methods=['PUT'])
+@role_required('doctor')
+def update_appointment(appointment_id):
+    data = request.get_json()
+    new_status = 1 if data.get('status') == 1 else 2  # 1=Approved, 2=Rejected
+    
+    with sqlite3.connect(DATABASE) as connection:
+        cursor = connection.cursor()
+        cursor.execute("UPDATE appointment SET status = ? WHERE id = ?",
+                     (new_status, appointment_id))
+        connection.commit()
+    
+    return {'success': True}
 
 if __name__ == '__main__':
     create_tables()
