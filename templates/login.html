@@ -1,119 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Skintellect</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-  <style>
-    /* General Styles */
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #f0faff, #f9f1ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .login-card {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      width: 22rem;
-      text-align: center;
-    }
-
-    h2 {
-      font-size: 1.875rem;
-      font-weight: bold;
-      color: #2563eb;
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      font-size: 0.875rem;
-      color: #6b7280;
-      margin-bottom: 1.5rem;
-    }
-
-    p a {
-      color: #2563eb;
-      font-weight: 500;
-      text-decoration: none;
-    }
-
-    p a:hover {
-      text-decoration: underline;
-    }
-
-    .form-group {
-      position: relative;
-      margin-bottom: 1.5rem;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem 2.5rem 0.75rem 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.75rem;
-      background: #f9fafb;
-      font-size: 0.9375rem;
-      color: #374151;
-      outline: none;
-      transition: 0.3s;
-    }
-
-    .form-group input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
-
-    .form-group i {
-      position: absolute;
-      top: 50%;
-      right: 1rem;
-      transform: translateY(-50%);
-      color: #9ca3af;
-      font-size: 1rem;
-    }
-
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 0.75rem;
-      background: linear-gradient(to right, #2563eb, #7c3aed);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      background: linear-gradient(to right, #1d4ed8, #6d28d9);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background-image: url('../static/assets/bg5.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
 </head>
-<body>
-  <div class="login-card">
-    <h2>Login</h2>
-    <p>Don't have an account? <a href="/register">Register Here</a></p>
-    <form action="/" method="post">
-      <div class="form-group">
-        <input type="text" name="username" placeholder="Enter Your Username" required>
-        <i class="fa fa-user"></i>
-      </div>
-      <div class="form-group">
-        <input type="password" name="password" placeholder="Enter Your Password" required>
-        <i class="fa fa-lock"></i>
-      </div>
-      <button type="submit">Log In</button>
-    </form>
-  </div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
+    <div class="flex flex-col md:flex-row bg-white shadow-lg rounded-2xl p-8 w-full max-w-3xl">
+        
+        <!-- Welcome Section -->
+        <div class="md:w-1/2 flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none text-center">
+            <h1 class="text-3xl md:text-4xl font-bold">Welcome Back!</h1>
+            <p class="text-lg font-medium mt-2">Log in to continue using SkInsight.</p>
+        </div>
+
+        <!-- Form Section -->
+        <div class="md:w-1/2 p-8 w-full flex flex-col">
+            <h2 class="text-2xl font-semibold text-center text-gray-900">Log In</h2>
+            <p class="text-center mt-2 text-gray-600">
+                Don't have an account? 
+                <a href="/register" class="text-purple-600 font-semibold hover:underline">Register Here.</a>
+            </p>
+
+            <!-- Form -->
+            <form action="/" method="post" class="flex flex-col gap-6 mt-6">
+                <div class="relative">
+                    <input type="text" name="username" placeholder="Enter Your Username" class="border rounded-lg px-4 py-3 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fa fa-user absolute top-3 right-4 text-gray-400"></i>
+                </div>
+                <div class="relative">
+                    <input type="password" name="password" placeholder="Enter Your Password" class="border rounded-lg px-4 py-3 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fa fa-lock absolute top-3 right-4 text-gray-400"></i>
+                </div>
+                <button type="submit" class="bg-blue-700 text-white font-semibold py-3 rounded-lg hover:bg-blue-800 transition">Log In</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
