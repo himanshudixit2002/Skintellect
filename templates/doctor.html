@@ -1,58 +1,37 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="min-h-screen w-screen flex items-center justify-center py-20 relative">
-    <div class="w-4/5 bg-white bg-opacity-95 rounded-xl p-8 backdrop-blur-md shadow-lg">
+<div class="min-h-screen w-screen flex items-center justify-center pt-20">
+    <div class="w-4/5 bg-white bg-opacity-90 rounded-xl p-8 backdrop-blur-md shadow-lg">
         <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">
             <i class="fa-solid fa-stethoscope"></i> Doctor's Appointments
         </h1>
-        <div id="appointmentsContainer" class="overflow-y-auto h-[60vh] p-4 bg-gray-100 rounded-md"></div>
+        <div id="appointmentsContainer" class="overflow-y-scroll h-[60vh] p-4 bg-gray-100 rounded-md"></div>
     </div>
 </div>
 
 <script>
-    // Ensure that `appointments` is serialized into JSON format in the Python backend
-    const appointments = JSON.parse('{{ appointments | tojson | safe }}');
-    const container = document.getElementById("appointmentsContainer");
+    var appointments = {{ appointments | safe }};
+    var container = document.getElementById("appointmentsContainer");
 
     if (appointments.length === 0) {
         container.innerHTML = `<p class="text-gray-500 text-center">No appointments available.</p>`;
     } else {
-        appointments.forEach(appointment => {
-            const appointmentDiv = document.createElement("div");
-            appointmentDiv.classList.add("p-4", "bg-white", "rounded-lg", "shadow-md", "mb-4", "relative");
+        appointments.forEach(function(appointment) {
+            var appointmentDiv = document.createElement("div");
+            appointmentDiv.classList.add("p-4", "bg-white", "rounded-lg", "shadow-md", "mb-4");
 
-            const status = appointment[8] === 0 ? "Pending" : "Accepted";
-            appointmentDiv.innerHTML = `
+            var content = `
                 <strong>Name:</strong> ${appointment[1]}<br>
                 <strong>Email:</strong> ${appointment[2]}<br>
                 <strong>Date:</strong> ${appointment[3]}<br>
                 <strong>Skin Type:</strong> ${appointment[4]}<br>
-                <strong>Status:</strong> ${status}<br>
             `;
 
-            const deleteIcon = document.createElement("i");
-            deleteIcon.classList.add("fa-solid", "fa-trash-alt", "cursor-pointer", "text-red-500", "absolute", "right-4", "top-4");
-            deleteIcon.onclick = function () {
-                handleDelete(appointment[0]);
-            };
-
-            appointmentDiv.appendChild(deleteIcon);
+            appointmentDiv.innerHTML = content;
             container.appendChild(appointmentDiv);
         });
     }
-
-    function handleDelete(appointmentId) {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/delete_user_request", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                alert("Appointment deleted successfully!");
-                window.location.reload();
-            }
-        };
-        xhr.send("id=" + appointmentId);
-    }
 </script>
+
 {% endblock %}

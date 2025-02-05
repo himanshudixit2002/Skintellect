@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Inter:wght@200;300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Onest:wght@400;500;600;700;800&family=Poppins:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-*{
+* {
     margin: 0;
-    padding:0;
+    padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
 }
@@ -13,17 +13,49 @@ body {
     overflow-x: hidden;
 }
 
-/* Login Pages */
+/* Navigation Bar */
+nav {
+    height: 10vh;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    padding: 0 6%;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+}
+
+nav div {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #d72638;
+}
+
+nav ul {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
+nav ul a {
+    text-decoration: none;
+    font-weight: 500;
+    color: #333;
+    transition: 0.3s;
+}
+
+nav ul a:hover {
+    color: #d72638;
+}
+
+/* Login & Register Page */
 .register-page {
     height: 100vh;
-    width: 100%;
-    background: linear-gradient(rgba(251,113,133,0.4), rgba(193, 124, 135, 0.4)), url('../assets/login-img.jpg');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(rgba(251,113,133,0.4), rgba(193, 124, 135, 0.4)), url('../assets/login-img.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 .register-container {
@@ -55,8 +87,8 @@ body {
 
 .saperator-box div {
     flex-grow: 1;
-    height: 2px; 
-    background: rgba(102, 102, 102, 0.25)
+    height: 2px;
+    background: rgba(102, 102, 102, 0.25);
 }
 
 .saperator-box span {
@@ -72,11 +104,12 @@ body {
     margin-top: 1rem;
 }
 
-.form-component input {
+.form-component input, .form-component select {
     padding: 0.75rem 1.5rem;
     border: 1px solid grey;
     border-radius: 12px;
     outline: none;
+    font-size: 1rem;
 }
 
 .register-container button {
@@ -90,6 +123,7 @@ body {
     margin-top: 2rem;
     cursor: pointer;
     transition: 0.3s;
+    font-size: 1rem;
 }
 
 .register-container button:hover {
@@ -123,70 +157,140 @@ body {
     }
 }
 
-/* Upload Pages */
-.upload-container {
-    border-radius: 40px;
-}
-
-.file-upload {
-    padding: 4rem;
-    border: 2px dashed rgb(189, 189, 189);
-    border-radius: 8px;
-    text-align: center;
-    cursor: pointer;
-    width: 100%;
-}
-
-.upload-btn {
-    background-color: #6587b4;
-    border: none;
-    color: white;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    margin-top: 0.5rem;
-    font-size: large;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.upload-btn:hover {
-    background-color: #4a6589;
-}
-
-.uploaded-file {
-    background-color: #5f7797;
-    color: white;
-    border-radius: 8px;
-    padding: 0.5rem 1.25rem;
+/* Profile Page */
+.profile-container {
+    min-height: 100vh;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    justify-content: center;
+    padding-top: 80px;
 }
 
-#progress-bar {
-    height: 3px;
-    width: 0%;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    background-color: #2d3e54;
-    border-radius: 40px;
+.profile-box {
+    width: 40%;
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.submit-btn {
-    border: none;
-    color: white;
-    background-color: #6587b4;
-    padding: 0.75rem 2rem;
-    border-radius: 30px;
-    font-size: large;
+.profile-box img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 1rem;
+    border: 4px solid #ddd;
+}
+
+.profile-box h2 {
+    text-align: center;
     font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
+    color: #333;
 }
 
-.submit-btn:hover {
-    background-color: #4a6589;
+.profile-box .details {
+    margin-top: 1.5rem;
+}
+
+.details div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: rgba(241, 148, 138, 0.3);
+    margin-bottom: 10px;
+}
+
+.details div:nth-child(even) {
+    background: rgba(255, 204, 188, 0.5);
+}
+
+.book-appointment-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem;
+    background: #055113;
+    color: white;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.book-appointment-btn:hover {
+    background: #033f0c;
+}
+
+/* Doctor's Appointments Page */
+.appointments-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 80px;
+}
+
+.appointments-box {
+    width: 60%;
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.appointments-box h1 {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.appointment-card {
+    padding: 1.5rem;
+    border-radius: 10px;
+    background: #fbe4d5;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.appointment-card:nth-child(even) {
+    background: #fdd0b7;
+}
+
+.appointment-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.appointment-actions i {
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: 0.3s;
+}
+
+.appointment-actions .fa-check {
+    color: green;
+}
+
+.appointment-actions .fa-trash {
+    color: red;
+}
+
+.appointment-actions i:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .register-container {
+        width: 80%;
+    }
+
+    .profile-box, .appointments-box {
+        width: 90%;
+    }
 }
