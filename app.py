@@ -11,7 +11,7 @@ import cv2
 import pandas as pd
 from joblib import load
 
-df=pd.read_csv(r"D:/projects/SkinSense AI/dataset/updated_skincare_products.csv")
+df=pd.read_csv(r"dataset/updated_skincare_products.csv")
 
 app = Flask(__name__)
 app.secret_key = '4545'
@@ -69,7 +69,8 @@ def insert_appointment_data(name,email,date,skin,phone,age,address,status,userna
     conn.close()                    
 
 # Load the trained model
-loaded_model = load("D:/projects/SkinSense AI/model/final_model.h5")
+loaded_model = load("model/final_model.h5") 
+#product recommend model trained on kaggle bcz there GPU
 
 def findappointment(user):
     conn = sqlite3.connect('app.db')
@@ -107,6 +108,7 @@ def init_app():
     create_tables()
 
 # Skin detection model initialization
+# this on roboflow trained
 rf_skin = Roboflow(api_key="8RSJzoEweFB7NxxNK6fg")
 project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
@@ -181,7 +183,7 @@ def predict():
 
         # Draw boxes on the image
         image = cv2.imread(image_path)
-        detections = sv.Detections.from_roboflow(skin_result)
+        detections = sv.Detections.from_inference(skin_result)
         label_annotator = sv.LabelAnnotator()
         bounding_box_annotator = sv.BoxAnnotator()
 
@@ -232,7 +234,7 @@ def login():
         if user and check_password_hash(user[2], password):
             session['username'] = username
             user_id = user[0]
-            if username=='doctor':
+            if username=='doctor1':
                 return redirect(url_for('allappoint'))
             else :
                 survey_response = get_survey_response(user_id)
