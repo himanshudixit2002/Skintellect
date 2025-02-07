@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from roboflow import Roboflow
 import supervision as sv
@@ -123,9 +123,6 @@ CLIENT = InferenceHTTPClient(
     api_key="Gqf1hrF7jdAh8EsbOoTM"
 )
 
-# Store unique classes detected
-unique_classes = set()
-
 # Mapping for oily skin class names
 class_mapping = {
     "Jenis Kulit Wajah - v6 2023-06-17 11-53am": "oily skin",
@@ -150,48 +147,65 @@ def recommend_products_based_on_classes(classes):
 @app.route('/predict', methods=['POST', 'GET'])
 def predict():
     if request.method == 'POST':
-        image_file = request.files['image']
-        image_filename = str(uuid.uuid4()) + '.jpg'
-        image_path = os.path.join('static', image_filename)
-        image_file.save(image_path)
+        try:
+            # Use a local set for unique classes per request
+            unique_classes = set()
+            
+            # Save the uploaded image with a unique filename
+            image_file = request.files['image']
+            image_filename = str(uuid.uuid4()) + '.jpg'
+            image_path = os.path.join('static', image_filename)
+            image_file.save(image_path)
 
-        # Skin detection using Roboflow
-        skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
-        skin_labels = [item["class"] for item in skin_result["predictions"]]
-        for label in skin_labels:
-            unique_classes.add(label)
-
-        # Oilyness detection using InferenceHTTPClient
-        custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
-        with CLIENT.use_configuration(custom_configuration):
-            oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
-        
-        if not oilyness_result['predictions']:
-            unique_classes.add("dryness")
-        else:
-            oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
-                                for prediction in oilyness_result['predictions']
-                                if prediction['confidence'] >= 0.3]
-            for label in oilyness_classes:
+            # Skin detection using Roboflow
+            skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
+            skin_labels = [item["class"] for item in skin_result.get("predictions", [])]
+            for label in skin_labels:
                 unique_classes.add(label)
 
-        image = cv2.imread(image_path)
-        detections = sv.Detections.from_inference(skin_result)
-        label_annotator = sv.LabelAnnotator()
-        bounding_box_annotator = sv.BoxAnnotator()
-        annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
-        annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-        recommended_products = recommend_products_based_on_classes(list(unique_classes))
-        prediction_data = {
-            'classes': list(unique_classes),
-            'recommendations': recommended_products
-        }
-        annotated_image_path = os.path.join('static', 'annotations_0.jpg')
-        cv2.imwrite(annotated_image_path, annotated_image)
+            # Oilyness detection using InferenceHTTPClient
+            custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
+            with CLIENT.use_configuration(custom_configuration):
+                oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
+            
+            if not oilyness_result.get('predictions'):
+                unique_classes.add("dryness")
+            else:
+                oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
+                                    for prediction in oilyness_result['predictions']
+                                    if prediction['confidence'] >= 0.3]
+                for label in oilyness_classes:
+                    unique_classes.add(label)
 
-        return render_template('face_analysis.html', data=prediction_data)
+            # Read image and annotate using supervision
+            image = cv2.imread(image_path)
+            detections = sv.Detections.from_inference(skin_result)
+            label_annotator = sv.LabelAnnotator()
+            bounding_box_annotator = sv.BoxAnnotator()
+            annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
+            annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
+            
+            # Get product recommendations based on detected classes
+            recommended_products = recommend_products_based_on_classes(list(unique_classes))
+            prediction_data = {
+                'classes': list(unique_classes),
+                'recommendations': recommended_products
+            }
+            
+            # Save the annotated image (if needed for later use)
+            annotated_image_path = os.path.join('static', 'annotations_0.jpg')
+            cv2.imwrite(annotated_image_path, annotated_image)
+            
+            # Return prediction data as JSON
+            return jsonify(prediction_data)
+        
+        except Exception as e:
+            print("Error during prediction:", e)
+            return jsonify({"error": "An error occurred while analyzing the image. Please try again."}), 500
+
     else:
-        return render_template('face_analysis.html', data={})
+        # For GET requests you may choose to return an empty JSON or render a page.
+        return jsonify({})
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -338,4 +352,3 @@ def doctor():
 if __name__ == '__main__':
     init_app()
     app.run(host='0.0.0.0', port=5000, debug=True)
-
