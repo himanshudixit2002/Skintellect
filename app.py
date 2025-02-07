@@ -147,51 +147,61 @@ def recommend_products_based_on_classes(classes):
             print(f"Warning: No column found for skin condition '{skin_condition}'")
     return recommendations
 
-@app.route('/predict', methods=['POST', 'GET'])
+@app.route('/predict', methods=['POST'])
 def predict():
-    if request.method == 'POST':
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+            
         image_file = request.files['image']
+        if image_file.filename == '':
+            return jsonify({'error': 'Empty filename'}), 400
+
+        # Generate unique filename
         image_filename = str(uuid.uuid4()) + '.jpg'
         image_path = os.path.join('static', image_filename)
         image_file.save(image_path)
 
+        # Initialize unique classes for each request
+        unique_classes = set()
+
         # Skin detection using Roboflow
         skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
         skin_labels = [item["class"] for item in skin_result["predictions"]]
-        for label in skin_labels:
-            unique_classes.add(label)
+        unique_classes.update(skin_labels)
 
-        # Oilyness detection using InferenceHTTPClient
-        custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
-        with CLIENT.use_configuration(custom_configuration):
+        # Oilyness detection
+        custom_config = InferenceConfiguration(confidence_threshold=0.3)
+        with CLIENT.use_configuration(custom_config):
             oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
         
-        if not oilyness_result['predictions']:
-            unique_classes.add("dryness")
+        if oilyness_result['predictions']:
+            oily_classes = [class_mapping.get(p['class'], p['class'])
+                            for p in oilyness_result['predictions'] if p['confidence'] >= 0.3]
+            unique_classes.update(oily_classes)
         else:
-            oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
-                                for prediction in oilyness_result['predictions']
-                                if prediction['confidence'] >= 0.3]
-            for label in oilyness_classes:
-                unique_classes.add(label)
+            unique_classes.add("dryness")
 
+        # Generate annotated image
         image = cv2.imread(image_path)
         detections = sv.Detections.from_inference(skin_result)
-        label_annotator = sv.LabelAnnotator()
-        bounding_box_annotator = sv.BoxAnnotator()
-        annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
-        annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-        recommended_products = recommend_products_based_on_classes(list(unique_classes))
-        prediction_data = {
-            'classes': list(unique_classes),
-            'recommendations': recommended_products
-        }
-        annotated_image_path = os.path.join('static', 'annotations_0.jpg')
-        cv2.imwrite(annotated_image_path, annotated_image)
+        annotated_image = sv.BoxAnnotator().annotate(image, detections)
+        annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections)
+        annotated_path = os.path.join('static', f'annotated_{image_filename}')
+        cv2.imwrite(annotated_path, annotated_image)
 
-        return render_template('face_analysis.html', data=prediction_data)
-    else:
-        return render_template('face_analysis.html', data={})
+        # Get recommendations
+        recommendations = recommend_products_based_on_classes(list(unique_classes))
+
+        return jsonify({
+            'classes': list(unique_classes),
+            'recommendations': recommendations,
+            'annotated_image': url_for('static', filename=f'annotated_{image_filename}')
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
