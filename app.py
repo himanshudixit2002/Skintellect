@@ -207,10 +207,10 @@ def register():
         session['username'] = username
         session['name'] = name
         session['age'] = age
-        return redirect('/')
+        return redirect(url_for('login'))
     return render_template('register.html')
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
