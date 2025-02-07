@@ -177,7 +177,8 @@ def predict():
         
         if oilyness_result['predictions']:
             oily_classes = [class_mapping.get(p['class'], p['class'])
-                            for p in oilyness_result['predictions'] if p['confidence'] >= 0.3]
+                            
+for p in oilyness_result['predictions'] if p['confidence'] >= 0.3]
             unique_classes.update(oily_classes)
         else:
             unique_classes.add("dryness")
