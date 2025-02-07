@@ -8,6 +8,7 @@
         min-height: 100vh;
         padding: 1rem;
         background: #f8f9fa;
+        position: relative;
     }
 
     .upload-section {
@@ -102,6 +103,31 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
+
+    /* Loading Overlay CSS */
+    .loading-overlay {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Mobile Accordion Styles */
+    .accordion-content {
+        display: none;
+    }
+    .accordion-content.active {
+        display: block;
+    }
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
 </style>
 
 <div class="main-container">
@@ -129,7 +155,9 @@
                 <svg class="w-12 h-12 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                 </svg>
-                <p class="text-center mt-2">Drag & drop or <label for="fileInput" class="text-pink-500 cursor-pointer">browse files</label></p>
+                <p class="text-center mt-2">
+                    Drag & drop or <label for="fileInput" class="text-pink-500 cursor-pointer">browse files</label>
+                </p>
             </div>
         </div>
 
@@ -175,7 +203,7 @@
             }
         }
 
-        // Desktop drag/drop
+        // Desktop drag/drop support
         if (window.matchMedia('(hover: hover)').matches) {
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -190,15 +218,24 @@
                 e.preventDefault();
                 dropZone.classList.remove('bg-pink-50');
                 handleFiles(e.dataTransfer.files);
+                // Update the file input so the file is submitted
+                fileInput.files = e.dataTransfer.files;
             });
         }
 
-        // Universal file input
+        // Universal file input handling
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Ensure a file has been selected
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("Please select an image file to analyze.");
+                return;
+            }
+
             loadingOverlay.style.display = 'flex';
             
             try {
@@ -210,28 +247,90 @@
                     body: formData
                 });
 
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
                 const data = await response.json();
                 renderResults(data);
                 document.getElementById('resultsSection').classList.remove('hidden');
             } catch (error) {
                 console.error('Upload failed:', error);
+                alert('An error occurred while analyzing the image. Please try again.');
             } finally {
                 loadingOverlay.style.display = 'none';
             }
         });
 
         function renderResults(data) {
-            // ... existing render logic with responsive updates ... 
-            // Add mobile-friendly accordion functionality
-            document.querySelectorAll('.condition-header').forEach(header => {
-                header.addEventListener('click', () => {
-                    if (window.innerWidth < 768) { // Mobile-only accordion
-                        const content = header.nextElementSibling;
-                        content.classList.toggle('hidden');
-                        header.querySelector('svg').classList.toggle('rotate-180');
-                    }
+            // Clear previous results
+            const predictionsList = document.getElementById('predictionsList');
+            predictionsList.innerHTML = '';
+            const recommendationsGrid = document.getElementById('recommendationsGrid');
+            recommendationsGrid.innerHTML = '';
+
+            // Render predictions (assuming data.predictions is an array)
+            if (data.predictions && data.predictions.length > 0) {
+                data.predictions.forEach(prediction => {
+                    const predictionDiv = document.createElement('div');
+                    predictionDiv.className = 'prediction-item';
+
+                    // Create an accordion header for mobile view
+                    const header = document.createElement('div');
+                    header.className = 'condition-header flex justify-between items-center cursor-pointer';
+                    header.innerHTML = `<span>${prediction.condition} - Confidence: ${prediction.confidence}%</span>
+                                        <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>`;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'accordion-content mt-2 text-gray-700';
+                    content.textContent = prediction.details || 'No additional details available.';
+
+                    // Mobile-only accordion toggle
+                    header.addEventListener('click', () => {
+                        if (window.innerWidth < 768) {
+                            content.classList.toggle('active');
+                            header.querySelector('svg').classList.toggle('rotate-180');
+                        }
+                    });
+
+                    predictionDiv.appendChild(header);
+                    predictionDiv.appendChild(content);
+                    predictionsList.appendChild(predictionDiv);
                 });
-            });
+            } else {
+                predictionsList.textContent = "No predictions available.";
+            }
+
+            // Render recommendations (assuming data.recommendations is an array)
+            if (data.recommendations && data.recommendations.length > 0) {
+                data.recommendations.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card border p-4 rounded-lg text-center';
+
+                    const img = document.createElement('img');
+                    img.src = product.image;
+                    img.alt = product.title;
+                    img.className = 'w-full h-auto mb-2';
+
+                    const title = document.createElement('h3');
+                    title.className = 'font-semibold mb-1';
+                    title.textContent = product.title;
+
+                    const desc = document.createElement('p');
+                    desc.className = 'text-sm text-gray-600';
+                    desc.textContent = product.description;
+
+                    productCard.appendChild(img);
+                    productCard.appendChild(title);
+                    productCard.appendChild(desc);
+
+                    recommendationsGrid.appendChild(productCard);
+                });
+            } else {
+                recommendationsGrid.textContent = "No recommendations available.";
+            }
         }
     });
 </script>
