@@ -27,6 +27,7 @@
       transition: background-color 0.4s, border-color 0.4s;
       cursor: pointer;
       margin-bottom: 20px;
+      position: relative;
   }
   .upload-box:hover {
       background: #e9f2ff;
@@ -41,6 +42,11 @@
   }
   .upload-box p {
       color: #555;
+  }
+  .file-size-note {
+      font-size: 0.9rem;
+      color: #007BFF;
+      margin-top: 10px;
   }
   .feedback {
       color: #007BFF;
@@ -105,7 +111,7 @@
 <div class="container-main">
   <div class="w-100" style="max-width: 650px;">
     <h1 class="text-center mb-4" style="color: #007BFF; font-size: 2.8rem;">AI Skin Analysis</h1>
-    <p class="text-center mb-4" style="color: #555;">
+    <p class="text-center mb-4" style="color: #7027c4;">
       Upload your image to receive an expert AI evaluation of your skin along with personalized product recommendations.
     </p>
     
@@ -114,7 +120,8 @@
       <div class="upload-box" id="uploadBox">
         <input id="fileInput" type="file" name="image" accept="image/*" required>
         <h3>Drag & Drop or Click to Select Your Image</h3>
-        <p>Supported formats: JPG, PNG, GIF</p>
+        <p>Supported formats: JPG, PNG</p>
+        <p class="file-size-note">Maximum file size: 720px</p>
         <p id="fileFeedback" class="feedback" style="display: none;"></p>
       </div>
       <div class="text-center">
@@ -153,11 +160,21 @@
   // Trigger file input on click
   uploadBox.addEventListener('click', () => fileInput.click());
 
-  // Show file name feedback when a file is selected
+  // File size limit (2MB)
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+
+  // Show file name feedback and check file size when a file is selected
   fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          if (file.size > MAX_FILE_SIZE) {
+              alert("The selected file is too large. Please choose a file smaller than 2MB.");
+              fileInput.value = ""; // Clear the file input
+              fileFeedback.style.display = 'none';
+              return;
+          }
           fileFeedback.style.display = 'block';
-          fileFeedback.textContent = "Selected File: " + fileInput.files[0].name;
+          fileFeedback.textContent = "Selected File: " + file.name;
       } else {
           fileFeedback.style.display = 'none';
       }
