@@ -9,9 +9,47 @@ from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 import cv2
 import pandas as pd
 import traceback
+import requests
+from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
 
 # Load skincare products dataset
 df = pd.read_csv(r"dataset/updated_skincare_products.csv")
+
+# Load API key from .env
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+app = Flask(__name__)
+
+# Chatbot API Route
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    user_input = request.json.get("userInput")
+    if not user_input:
+        return jsonify({"error": "User input is required"}), 400
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        data = {
+            "model": "gpt-4",
+            "messages": [{"role": "user", "content": user_input}],
+            "max_tokens": 100,
+        }
+
+        response = requests.post("https://api.openai.com/v1/chat/completions", json=data, headers=headers)
+        response_json = response.json()
+        bot_reply = response_json["choices"][0]["message"]["content"]
+
+        return jsonify({"botReply": bot_reply})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True

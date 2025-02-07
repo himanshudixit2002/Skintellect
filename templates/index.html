@@ -1,47 +1,47 @@
 {% extends "layout.html" %}
 {% block title %}SKINTELLECT | AI-Powered Dermatology{% endblock %}
+
 {% block content %}
 <div class="min-h-screen flex flex-col">
-  <!-- Hero Section -->
-  <div class="flex-grow relative overflow-hidden">
-    <div class="container mx-auto px-6 py-24 text-center">
-      <h1 class="text-5xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
-        Transform Your Skin Health
-      </h1>
-      <p class="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
-        Leverage AI-powered analysis to get personalized skincare recommendations and expert dermatologist consultations.
-      </p>
-      <div class="flex justify-center space-x-6">
-        <a href="/register" class="bg-emerald-400 hover:bg-emerald-300 text-white px-8 py-4 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
-          Get Started
-        </a>
-        <a href="/login" class="border-2 border-blue-300 text-blue-100 hover:border-emerald-300 hover:text-white px-8 py-4 rounded-lg font-semibold transition-colors">
-          Existing User
-        </a>
-      </div>
+    <!-- Hero Section -->
+    <div class="flex-grow relative overflow-hidden">
+        <div class="container mx-auto px-6 py-24 text-center">
+            <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-300">
+                Transform Your Skin Health
+            </h1>
+            <p class="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
+                Leverage AI-powered analysis to get personalized skincare recommendations and expert dermatologist consultations.
+            </p>
+            <div class="flex justify-center space-x-6">
+                <a href="/register" class="bg-emerald-400 hover:bg-emerald-300 text-white px-8 py-4 rounded-lg font-semibold">
+                    Get Started
+                </a>
+                <a href="/login" class="border-2 border-blue-300 text-blue-100 hover:border-emerald-300 hover:text-white px-8 py-4 rounded-lg">
+                    Existing User
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Features Grid -->
-  <div class="bg-blue-900/50 py-16">
-    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
-        <i class="fas fa-robot text-4xl text-emerald-400 mb-4"></i>
-        <h3 class="text-xl font-bold text-white mb-2">AI Analysis</h3>
-        <p class="text-blue-200">Instant skin assessment using advanced computer vision</p>
-      </div>
-      <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
-        <i class="fas fa-user-md text-4xl text-emerald-400 mb-4"></i>
-        <h3 class="text-xl font-bold text-white mb-2">Expert Consultations</h3>
-        <p class="text-blue-200">Connect with certified dermatologists</p>
-      </div>
-      <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
-        <i class="fas fa-heartbeat text-4xl text-emerald-400 mb-4"></i>
-        <h3 class="text-xl font-bold text-white mb-2">Personalized Plans</h3>
-        <p class="text-blue-200">Customized skincare routines based on your profile</p>
-      </div>
+    <!-- Features Grid -->
+    <div class="bg-blue-900/50 py-16">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
+                <i class="fas fa-robot text-4xl text-emerald-400 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-2">AI Analysis</h3>
+                <p class="text-blue-200">Instant skin assessment using advanced computer vision</p>
+            </div>
+            <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
+                <i class="fas fa-user-md text-4xl text-emerald-400 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-2">Expert Consultations</h3>
+                <p class="text-blue-200">Connect with certified dermatologists</p>
+            </div>
+            <div class="p-6 bg-blue-800/30 rounded-xl hover:bg-blue-800/50 transition-colors">
+                <i class="fas fa-heartbeat text-4xl text-emerald-400 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-2">Personalized Plans</h3>
+                <p class="text-blue-200">Customized skincare routines based on your profile</p>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
-
