@@ -329,12 +329,9 @@ def allappoint():
 
 @app.route("/userappointment")
 def userappoint():
-    user = session.get('username')
-    if not user:
-        return redirect(url_for('login'))
-    all_appointments = findappointment(user)  # or however you fetch appointments for the logged-in user
-    return render_template('my_appointments.html', all_appointments=all_appointments)
-
+    user = session['username']
+    all_appointments = findappointment(user)
+    return render_template('userappointment.html', all_appointments=all_appointments)
 
 @app.route("/update_status", methods=["POST"])
 def update_status():
