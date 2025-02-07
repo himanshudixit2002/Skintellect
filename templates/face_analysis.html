@@ -10,7 +10,6 @@
         background: #f8f9fa;
         position: relative;
     }
-
     .upload-section {
         border: 2px dashed #dee2e6;
         border-radius: 12px;
@@ -19,7 +18,6 @@
         transition: all 0.3s ease;
         background: white;
     }
-
     .predictions-container, .recommendations-container {
         margin: 2rem 0;
         background: white;
@@ -27,14 +25,12 @@
         padding: 1.5rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
-
     /* Mobile-first Grid */
     .product-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-
     /* Tablet+ Styles */
     @media (min-width: 768px) {
         .main-container {
@@ -42,59 +38,49 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .product-grid {
             grid-template-columns: repeat(2, 1fr);
         }
-
         .upload-section {
             padding: 2rem;
         }
     }
-
     /* Desktop Styles */
     @media (min-width: 1024px) {
         .product-grid {
             grid-template-columns: repeat(3, 1fr);
         }
-
         .predictions-container, .recommendations-container {
             padding: 2rem;
         }
     }
-
     /* Touch Optimization */
     button, .product-card {
         touch-action: manipulation;
         min-height: 48px;
     }
-
     /* Fluid Typography */
     html {
         font-size: 16px;
     }
-
     @media (min-width: 768px) {
         html {
             font-size: 18px;
         }
     }
-
     /* Image Responsiveness */
-    #previewImage {
+    #previewImage, #annotatedImage {
         width: 100%;
         height: auto;
         max-width: 600px;
         margin: 0 auto;
         display: block;
     }
-
     /* Loading Animation */
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
-
     .loading-spinner {
         width: 40px;
         height: 40px;
@@ -103,10 +89,9 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
-
     /* Loading Overlay CSS */
     .loading-overlay {
-        display: none; /* Hidden by default */
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -117,30 +102,26 @@
         align-items: center;
         justify-content: center;
     }
-
-    /* Mobile Accordion Styles */
-    .accordion-content {
-        display: none;
-    }
-    .accordion-content.active {
-        display: block;
-    }
-    .rotate-180 {
-        transform: rotate(180deg);
+    /* Optional: Styles for result sections */
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #eee;
     }
 </style>
 
 <div class="main-container">
+    <!-- Loading overlay shown during processing -->
     <div class="loading-overlay">
         <div class="loading-spinner"></div>
     </div>
 
     <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">AI Skin Analysis</h1>
     
+    <!-- Upload form -->
     <form id="uploadForm" enctype="multipart/form-data">
         <div class="upload-section" id="dropZone">
             <input type="file" id="fileInput" class="hidden" accept="image/*" required>
-            <!-- Mobile-optimized upload interface -->
+            <!-- Mobile interface -->
             <div class="md:hidden">
                 <label for="fileInput" class="block text-center">
                     <svg class="w-12 h-12 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,8 +130,7 @@
                     <p class="mt-2 text-pink-500 font-medium">Tap to Upload</p>
                 </label>
             </div>
-            
-            <!-- Desktop upload interface -->
+            <!-- Desktop interface -->
             <div class="hidden md:block">
                 <svg class="w-12 h-12 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -160,14 +140,13 @@
                 </p>
             </div>
         </div>
-
         <button type="submit" class="w-full md:w-auto px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
             Analyze Skin
         </button>
     </form>
 
+    <!-- Results section (hidden until data is loaded) -->
     <div id="resultsSection" class="hidden">
-        <!-- Responsive results display -->
         <div class="predictions-container">
             <h2 class="text-xl font-semibold mb-4">Detected Skin Conditions</h2>
             <ul id="predictionsList" class="list-group"></ul>
@@ -177,143 +156,145 @@
             <h2 class="text-xl font-semibold mb-4">Product Recommendations</h2>
             <div id="recommendationsGrid" class="product-grid"></div>
         </div>
+
+        <div class="mt-4">
+            <h2 class="text-xl font-semibold mb-4">Annotated Image</h2>
+            <img id="annotatedImage" src="" alt="Annotated Image">
+        </div>
     </div>
 
+    <!-- Optional: Preview image for the uploaded file -->
     <div id="imagePreview" class="mt-4 rounded-xl overflow-hidden hidden">
-        <img id="previewImage" class="w-full h-auto" alt="Skin preview">
+        <img id="previewImage" alt="Skin preview">
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const form = document.getElementById('uploadForm');
-        const loadingOverlay = document.querySelector('.loading-overlay');
+document.addEventListener('DOMContentLoaded', () => {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const form = document.getElementById('uploadForm');
+    const loadingOverlay = document.querySelector('.loading-overlay');
 
-        // Function to handle file preview
-        function handleFiles(files) {
-            if (files.length) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                    document.getElementById('previewImage').src = e.target.result;
-                };
-                reader.readAsDataURL(files[0]);
-            }
+    // Function to show file preview
+    function handleFiles(files) {
+        if (files.length) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').classList.remove('hidden');
+                document.getElementById('previewImage').src = e.target.result;
+            };
+            reader.readAsDataURL(files[0]);
         }
+    }
 
-        // Desktop drag & drop support
-        if (window.matchMedia('(hover: hover)').matches) {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('bg-pink-50');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('bg-pink-50');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('bg-pink-50');
-                handleFiles(e.dataTransfer.files);
-                fileInput.files = e.dataTransfer.files;
-            });
-        }
-
-        // File input change event
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-        // Form submission event
-        form.addEventListener('submit', async (e) => {
+    // Desktop drag & drop support
+    if (window.matchMedia('(hover: hover)').matches) {
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert("Please select an image file to analyze.");
-                return;
-            }
-
-            loadingOverlay.style.display = 'flex';
-            
-            try {
-                const formData = new FormData();
-                formData.append('image', fileInput.files[0]);
-
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-                renderResults(data);
-                document.getElementById('resultsSection').classList.remove('hidden');
-            } catch (error) {
-                console.error('Upload failed:', error);
-                alert('An error occurred while analyzing the image. Please try again.');
-            } finally {
-                loadingOverlay.style.display = 'none';
-            }
+            dropZone.classList.add('bg-pink-50');
         });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-pink-50');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-pink-50');
+            handleFiles(e.dataTransfer.files);
+            fileInput.files = e.dataTransfer.files;
+        });
+    }
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        function renderResults(data) {
-            // Render detected skin conditions from data.classes
-            const predictionsList = document.getElementById('predictionsList');
-            predictionsList.innerHTML = '';
-            if (data.classes && data.classes.length > 0) {
-                data.classes.forEach(condition => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.textContent = condition;
-                    predictionsList.appendChild(li);
-                });
-            } else {
-                predictionsList.textContent = "No predictions available.";
-            }
+    // Form submission via AJAX
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-            // Render product recommendations from data.recommendations
-            const recommendationsGrid = document.getElementById('recommendationsGrid');
-            recommendationsGrid.innerHTML = '';
-            if (data.recommendations && data.recommendations.length > 0) {
-                data.recommendations.forEach(rec => {
-                    // rec is expected to be an array: [skin_condition, productsList]
-                    const card = document.createElement('div');
-                    card.className = 'card mb-3';
-                    
-                    const header = document.createElement('div');
-                    header.className = 'card-header';
-                    header.innerHTML = `<strong>${rec[0]}</strong>`;
-                    card.appendChild(header);
-                    
-                    const cardBody = document.createElement('div');
-                    cardBody.className = 'card-body';
-                    
-                    if (rec[1] && rec[1].length > 0) {
-                        const ul = document.createElement('ul');
-                        ul.className = 'list-group list-group-flush';
-                        rec[1].forEach(product => {
-                            const li = document.createElement('li');
-                            li.className = 'list-group-item';
-                            li.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
-                                            Price: ${product.Price}<br>
-                                            Ingredients: ${product.Ingredients}`;
-                            ul.appendChild(li);
-                        });
-                        cardBody.appendChild(ul);
-                    } else {
-                        cardBody.innerHTML = "<p>No products available for this condition.</p>";
-                    }
-                    card.appendChild(cardBody);
-                    recommendationsGrid.appendChild(card);
-                });
-            } else {
-                recommendationsGrid.textContent = "No recommendations available.";
+        // Check if file is selected
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("Please select an image file to analyze.");
+            return;
+        }
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
+            const data = await response.json();
+            renderResults(data);
+            document.getElementById('resultsSection').classList.remove('hidden');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('An error occurred while analyzing the image. Please try again.');
+        } finally {
+            loadingOverlay.style.display = 'none';
         }
     });
+
+    // Function to render the results on the same page
+    function renderResults(data) {
+        // Render detected skin conditions
+        const predictionsList = document.getElementById('predictionsList');
+        predictionsList.innerHTML = '';
+        if (data.classes && data.classes.length > 0) {
+            data.classes.forEach(condition => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = condition;
+                predictionsList.appendChild(li);
+            });
+        } else {
+            predictionsList.textContent = "No predictions available.";
+        }
+
+        // Render product recommendations
+        const recommendationsGrid = document.getElementById('recommendationsGrid');
+        recommendationsGrid.innerHTML = '';
+        if (data.recommendations && data.recommendations.length > 0) {
+            data.recommendations.forEach(rec => {
+                // Each recommendation should be an array: [skin_condition, productsList]
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.innerHTML = `<strong>${rec[0]}</strong>`;
+                card.appendChild(header);
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+                if (rec[1] && rec[1].length > 0) {
+                    const ul = document.createElement('ul');
+                    ul.className = 'list-group list-group-flush';
+                    rec[1].forEach(product => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
+                                        Price: ${product.Price}<br>
+                                        Ingredients: ${product.Ingredients}`;
+                        ul.appendChild(li);
+                    });
+                    cardBody.appendChild(ul);
+                } else {
+                    cardBody.innerHTML = "<p>No products available for this condition.</p>";
+                }
+                card.appendChild(cardBody);
+                recommendationsGrid.appendChild(card);
+            });
+        } else {
+            recommendationsGrid.textContent = "No recommendations available.";
+        }
+
+        // Display the annotated image (the backend should have saved it as annotations_0.jpg)
+        const annotatedImage = document.getElementById('annotatedImage');
+        annotatedImage.src = "/static/annotations_0.jpg";
+    }
+});
 </script>
 {% endblock %}
