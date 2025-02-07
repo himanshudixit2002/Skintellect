@@ -148,87 +148,70 @@ def recommend_products_based_on_classes(classes):
 def predict():
     if request.method == 'POST':
         try:
-            print("Starting /predict POST request processing")
-            # Initialize a local set to store unique detected classes
-            unique_classes = set()
-
-            # Process the uploaded image
-            image_file = request.files.get('image')
-            if not image_file:
-                print("No image file found in the request.")
-                return "No image uploaded.", 400
-
-            # Ensure the static folder exists
-            static_dir = 'static'
-            if not os.path.exists(static_dir):
-                os.makedirs(static_dir)
-
+            # Process image and get predictions
+            image_file = request.files['image']
+            
             # Generate a unique filename for the image
             image_filename = str(uuid.uuid4()) + '.jpg'
-            image_path = os.path.join(static_dir, image_filename)
+            image_path = os.path.join('static', image_filename)
+            
+            # Save the uploaded image
             image_file.save(image_path)
-            print("Image saved to", image_path)
+            
+            # Initialize unique_classes set
+            unique_classes = set()
 
-            # ===== Skin Detection using Roboflow =====
-            print("Starting skin detection")
-            skin_response = model_skin.predict(image_path, confidence=15, overlap=30)
-            skin_result = skin_response.json()
-            print("Skin detection result:", skin_result)
+            # Skin detection using Roboflow
+            skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
             skin_labels = [item["class"] for item in skin_result.get("predictions", [])]
-            unique_classes.update(skin_labels)
-            print("Unique classes after skin detection:", unique_classes)
+            for label in skin_labels:
+                unique_classes.add(label)
 
-            # ===== Oilyness Detection using InferenceHTTPClient =====
-            print("Starting oilyness detection")
+            # Oilyness detection with confidence threshold
             custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
             with CLIENT.use_configuration(custom_configuration):
                 oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
-            print("Oilyness detection result:", oilyness_result)
+            
+            # Check if oilyness prediction is empty
             if not oilyness_result.get('predictions'):
                 unique_classes.add("dryness")
             else:
-                oilyness_classes = [
-                    class_mapping.get(prediction['class'], prediction['class'])
-                    for prediction in oilyness_result.get('predictions', [])
-                    if prediction.get('confidence', 0) >= 0.3
-                ]
-                unique_classes.update(oilyness_classes)
-            print("Unique classes after oilyness detection:", unique_classes)
+                oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
+                                      for prediction in oilyness_result.get('predictions', [])
+                                      if prediction.get('confidence', 0) >= 0.3]
+                for label in oilyness_classes:
+                    unique_classes.add(label)
 
-            # ===== Annotate the Image =====
+            # Draw boxes on the image using OpenCV and supervision
             image = cv2.imread(image_path)
-            if image is None:
-                print("Error: cv2 could not read the image from", image_path)
-                return "Error reading the image.", 500
-
-            print("Annotating image")
             detections = sv.Detections.from_inference(skin_result)
             label_annotator = sv.LabelAnnotator()
             bounding_box_annotator = sv.BoxAnnotator()
+
             annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
             annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-
-            # ===== Get Product Recommendations =====
+            
+            # Get product recommendations based on detected classes
             recommended_products = recommend_products_based_on_classes(list(unique_classes))
             prediction_data = {
                 'classes': list(unique_classes),
                 'recommendations': recommended_products
             }
-            print("Prediction data:", prediction_data)
-
-            # Save the annotated image as annotations_0.jpg in the static folder
-            annotated_image_path = os.path.join(static_dir, 'annotations_0.jpg')
+            print(prediction_data)
+            
+            # Save the annotated image as annotations_0.jpg (this image will be shown in the UI)
+            annotated_image_path = os.path.join('static', 'annotations_0.jpg')
             cv2.imwrite(annotated_image_path, annotated_image)
-            print("Annotated image saved to", annotated_image_path)
 
-            # Render the template with the prediction data
+            # Render the same page with the prediction data
             return render_template('face_analysis.html', data=prediction_data)
         except Exception as e:
-            print("Error during prediction:")
-            traceback.print_exc()
+            print("Error during prediction:", e)
             return "An error occurred while analyzing the image. Please try again.", 500
     else:
-        return render_template('face_analysis.html', data=[])
+        # For GET requests, render the page with an empty data object.
+        return render_template('face_analysis.html', data={})
+
 
 
 @app.route('/register', methods=['GET', 'POST'])

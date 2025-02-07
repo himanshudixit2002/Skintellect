@@ -2,299 +2,132 @@
 
 {% block content %}
 <style>
-    /* Base Mobile Styles */
-    .main-container {
-        width: 100%;
-        min-height: 100vh;
-        padding: 1rem;
-        background: #f8f9fa;
-        position: relative;
-    }
-    .upload-section {
-        border: 2px dashed #dee2e6;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        transition: all 0.3s ease;
-        background: white;
-    }
     .predictions-container, .recommendations-container {
-        margin: 2rem 0;
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    /* Mobile-first Grid */
-    .product-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    /* Tablet+ Styles */
-    @media (min-width: 768px) {
-        .main-container {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .product-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .upload-section {
-            padding: 2rem;
-        }
-    }
-    /* Desktop Styles */
-    @media (min-width: 1024px) {
-        .product-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-        .predictions-container, .recommendations-container {
-            padding: 2rem;
-        }
-    }
-    /* Touch Optimization */
-    button, .product-card {
-        touch-action: manipulation;
-        min-height: 48px;
-    }
-    /* Fluid Typography */
-    html {
-        font-size: 16px;
-    }
-    @media (min-width: 768px) {
-        html {
-            font-size: 18px;
-        }
-    }
-    /* Image Responsiveness */
-    #previewImage, #annotatedImage {
-        width: 100%;
-        height: auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+        width: 80%;
         max-width: 600px;
-        margin: 0 auto;
-        display: block;
+        display: active;
     }
-    /* Loading Animation */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+
+    .condition-title {
+        color: #333;
+        font-weight: bold;
+        margin-top: 10px;
     }
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #ec4899;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
+
+    .product-list {
+        list-style: none;
+        padding: 0;
     }
-    /* Loading Overlay CSS */
-    .loading-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.8);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-    /* Optional: Styles for result sections */
-    .list-group-item {
-        border: none;
+
+    .product-list li {
+        padding: 8px;
         border-bottom: 1px solid #eee;
+        margin-bottom: 5px;
+    }
+
+    .product-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .span {
+        font-size: 20px;
+        font-weight: bold;
+        font-family: serif;
     }
 </style>
+<div class="min-h-[90vh] w-screen flex items-center relative justify-center">
+    <!-- Optional background image can be uncommented -->
+    <!-- <img src="../static/assets/bg5.webp" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-[90%] z-0"> -->
 
-<div class="main-container">
-    <!-- Loading overlay shown during processing -->
-    <div class="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">AI Skin Analysis</h1>
-    
-    <!-- Upload form -->
-    <form id="uploadForm" enctype="multipart/form-data">
-        <div class="upload-section" id="dropZone">
-            <input type="file" id="fileInput" class="hidden" accept="image/*" required>
-            <!-- Mobile interface -->
-            <div class="md:hidden">
-                <label for="fileInput" class="block text-center">
-                    <svg class="w-12 h-12 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                    </svg>
-                    <p class="mt-2 text-pink-500 font-medium">Tap to Upload</p>
-                </label>
-            </div>
-            <!-- Desktop interface -->
-            <div class="hidden md:block">
-                <svg class="w-12 h-12 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-                <p class="text-center mt-2">
-                    Drag & drop or <label for="fileInput" class="text-pink-500 cursor-pointer">browse files</label>
+    <div class="my-12 w-[50vw] bg-white bg-opacity-80 rounded-xl p-8 backdrop-blur-md z-10">
+        <h1 class="text-[40px] leading-[45px] fon-bold">Upload Your Image</h1>
+        <p class="text-zinc-500 mt-1">Get Expert AI evaluations of your skin.</p>
+        <form action="/predict" method="post" enctype="multipart/form-data">
+            <div class="my-6 w-full p-12 rounded-2xl border-pink-500 border-2 border-dashed flex flex-col gap-4 justify-center items-center">
+                <input id="file" class="hidden" type="file" name="image" accept="image/*" required>
+                <p class="text-center text-lg">
+                    <span onclick="handleFileClick()" class="text-blue-500 font-semibold underline text-xl">Click Here</span> To Select File
                 </p>
+                <p class="mt-4 text-sm hidden" id="file-selected"> File Selected!</p>
             </div>
-        </div>
-        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
-            Analyze Skin
-        </button>
-    </form>
-
-    <!-- Results section (hidden until data is loaded) -->
-    <div id="resultsSection" class="hidden">
+            <button class="px-6 py-2 text-white text-lg font-semibold bg-pink-500 hover:bg-pink-600 rounded-xl" type="submit">Predict</button>
+        </form>
         <div class="predictions-container">
-            <h2 class="text-xl font-semibold mb-4">Detected Skin Conditions</h2>
-            <ul id="predictionsList" class="list-group"></ul>
+            <h2 class="condition-title">Predictions:</h2>
+            <ul id="prediction" class="product-list"></ul>
         </div>
-
         <div class="recommendations-container">
-            <h2 class="text-xl font-semibold mb-4">Product Recommendations</h2>
-            <div id="recommendationsGrid" class="product-grid"></div>
+            <h2 class="condition-title">Recommendations:</h2>
+            <ul id="recommendations" class="product-list"></ul>
         </div>
-
-        <div class="mt-4">
-            <h2 class="text-xl font-semibold mb-4">Annotated Image</h2>
-            <img id="annotatedImage" src="" alt="Annotated Image">
-        </div>
-    </div>
-
-    <!-- Optional: Preview image for the uploaded file -->
-    <div id="imagePreview" class="mt-4 rounded-xl overflow-hidden hidden">
-        <img id="previewImage" alt="Skin preview">
+        <img src="" id="image" alt="" class="hidden mt-4 h-[400px] w-full object-fit">
     </div>
 </div>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const form = document.getElementById('uploadForm');
-    const loadingOverlay = document.querySelector('.loading-overlay');
+    // Parse the prediction data passed from Flask
+    var data = '{{ data | tojson | safe }}';
+    const jsonData = JSON.parse(data);
+    console.log(jsonData);
 
-    // Function to show file preview
-    function handleFiles(files) {
-        if (files.length) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('imagePreview').classList.remove('hidden');
-                document.getElementById('previewImage').src = e.target.result;
-            };
-            reader.readAsDataURL(files[0]);
-        }
+    const fileInput = document.getElementById('file');
+    function handleFileClick() {
+        fileInput.click();
     }
-
-    // Desktop drag & drop support
-    if (window.matchMedia('(hover: hover)').matches) {
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('bg-pink-50');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('bg-pink-50');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('bg-pink-50');
-            handleFiles(e.dataTransfer.files);
-            fileInput.files = e.dataTransfer.files;
-        });
-    }
-    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-    // Form submission via AJAX
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Check if file is selected
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert("Please select an image file to analyze.");
-            return;
-        }
-        loadingOverlay.style.display = 'flex';
-
-        try {
-            const formData = new FormData();
-            formData.append('image', fileInput.files[0]);
-
-            const response = await fetch('/predict', {
-                method: 'POST',
-                body: formData
-            });
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const data = await response.json();
-            renderResults(data);
-            document.getElementById('resultsSection').classList.remove('hidden');
-        } catch (error) {
-            console.error('Upload failed:', error);
-            alert('An error occurred while analyzing the image. Please try again.');
-        } finally {
-            loadingOverlay.style.display = 'none';
-        }
+    fileInput.addEventListener('change', () => {
+        document.getElementById('file-selected').classList.toggle('hidden');
     });
 
-    // Function to render the results on the same page
-    function renderResults(data) {
-        // Render detected skin conditions
-        const predictionsList = document.getElementById('predictionsList');
-        predictionsList.innerHTML = '';
-        if (data.classes && data.classes.length > 0) {
-            data.classes.forEach(condition => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = condition;
-                predictionsList.appendChild(li);
+    // Wait for the DOM to fully load to render the results
+    document.addEventListener("DOMContentLoaded", () => {
+        // Render predictions if available
+        const predictionContainer = document.getElementById('prediction');
+        if (jsonData && jsonData.classes) {
+            jsonData.classes.forEach(condition => {
+                const conditionItem = document.createElement('li');
+                conditionItem.textContent = condition;
+                predictionContainer.appendChild(conditionItem);
             });
-        } else {
-            predictionsList.textContent = "No predictions available.";
         }
 
-        // Render product recommendations
-        const recommendationsGrid = document.getElementById('recommendationsGrid');
-        recommendationsGrid.innerHTML = '';
-        if (data.recommendations && data.recommendations.length > 0) {
-            data.recommendations.forEach(rec => {
-                // Each recommendation should be an array: [skin_condition, productsList]
-                const card = document.createElement('div');
-                card.className = 'card mb-3';
-                const header = document.createElement('div');
-                header.className = 'card-header';
-                header.innerHTML = `<strong>${rec[0]}</strong>`;
-                card.appendChild(header);
-                const cardBody = document.createElement('div');
-                cardBody.className = 'card-body';
-                if (rec[1] && rec[1].length > 0) {
-                    const ul = document.createElement('ul');
-                    ul.className = 'list-group list-group-flush';
-                    rec[1].forEach(product => {
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item';
-                        li.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
-                                        Price: ${product.Price}<br>
-                                        Ingredients: ${product.Ingredients}`;
-                        ul.appendChild(li);
-                    });
-                    cardBody.appendChild(ul);
-                } else {
-                    cardBody.innerHTML = "<p>No products available for this condition.</p>";
-                }
-                card.appendChild(cardBody);
-                recommendationsGrid.appendChild(card);
+        // Render recommendations if available
+        const recommendationContainer = document.getElementById('recommendations');
+        if (jsonData && jsonData.recommendations) {
+            jsonData.recommendations.forEach(item => {
+                const condition = item[0];
+                const products = item[1];
+                console.log(item);
+                const conditionItem = document.createElement('li');
+                conditionItem.innerHTML = `<strong>${condition} :</strong> `;
+                products.forEach(product => {
+                    const productItem = document.createElement('li');
+                    conditionItem.classList.add('condition');
+                    // Clean up the ingredients string (remove non-alphanumeric characters)
+                    const Ingredients = product.Ingredients.replace(/[^a-zA-Z0-9\s]/g, "");
+                    productItem.innerHTML = `
+                        <span>Brand :</span> ${product.Brand} <br>
+                        <span>Name :</span> ${product.Name} <br>
+                        <span>Price :</span> $ ${product.Price} <br>
+                        <span>Ingredients :</span> ${Ingredients}
+                    `;
+                    conditionItem.appendChild(productItem);
+                });
+                recommendationContainer.appendChild(conditionItem);
             });
-        } else {
-            recommendationsGrid.textContent = "No recommendations available.";
         }
 
-        // Display the annotated image (the backend should have saved it as annotations_0.jpg)
-        const annotatedImage = document.getElementById('annotatedImage');
-        annotatedImage.src = "/static/annotations_0.jpg";
-    }
-});
+        // If there are detected classes, show the annotated image
+        if (jsonData && jsonData.classes && jsonData.classes.length > 0) {
+            const img = document.getElementById('image');
+            if (img) {
+                img.src = "/static/annotations_0.jpg"; // Adjust the path if necessary
+                img.classList.remove('hidden');
+            }
+        }
+    });
 </script>
 {% endblock %}
