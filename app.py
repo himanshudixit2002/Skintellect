@@ -51,7 +51,7 @@ def chatbot():
 
 
 
-app = Flask(__name__)
+# Removed duplicate Flask app initialization
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = '4545'
 DATABASE = 'app.db'
