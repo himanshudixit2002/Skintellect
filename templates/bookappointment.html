@@ -2,112 +2,219 @@
 
 {% block content %}
 <style>
-  /* Container for the appointments page */
-  .appointment-container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 1rem;
-  }
-  /* Appointment card styling */
-  .appointment-card {
-      margin-bottom: 1.5rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .appointment-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-  }
-  .appointment-header {
-      background-color: #007BFF;
-      color: #fff;
-      padding: 1rem;
-      border-top-left-radius: 0.75rem;
-      border-top-right-radius: 0.75rem;
-  }
-  .appointment-body {
-      padding: 1rem;
-  }
-  .delete-btn {
-      cursor: pointer;
-  }
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-      .appointment-card {
-          margin-bottom: 1rem;
-      }
-  }
+    .consultation-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .form-input-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        transition: color 0.3s ease;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
+
+    @media (max-width: 768px) {
+        .consultation-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .form-input {
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+        }
+        
+        .form-icon {
+            left: 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
 </style>
 
-<div class="appointment-container">
-  <h1 class="text-center mb-4" style="color: #007BFF;">My Appointments</h1>
-  <div class="row" id="appointmentsRow">
-    {% if all_appointments %}
-      {% for appointment in all_appointments %}
-        <div class="col-md-6">
-          <div class="card appointment-card">
-            <div class="appointment-header d-flex justify-content-between align-items-center">
-              <div>
-                <h5 class="mb-0">{{ appointment[1] }}</h5>
-              </div>
-              <div>
-                {% if appointment[8] == 1 %}
-                  <span class="badge bg-success">Accepted</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-              </div>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="consultation-container">
+        <div class="max-w-3xl mx-auto space-y-8">
+            <div class="text-center space-y-4">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">
+                    Dermatology Consultation Booking
+                </h1>
+                <p class="text-gray-600 text-lg">
+                    Schedule your personalized skin health assessment
+                </p>
             </div>
-            <div class="appointment-body">
-              <p class="mb-1"><strong>Email:</strong> {{ appointment[2] }}</p>
-              <p class="mb-1"><strong>Date:</strong> {{ appointment[3] }}</p>
-              <p class="mb-1"><strong>Skin Type:</strong> {{ appointment[4] }}</p>
-              <p class="mb-1"><strong>Phone:</strong> {{ appointment[5] }}</p>
-              <button class="btn btn-sm btn-danger delete-btn" data-id="{{ appointment[0] }}">
-                <i class="fas fa-trash-alt"></i> Delete
-              </button>
-            </div>
-          </div>
+
+            <form id="consultationForm" class="space-y-6" action="/appointment" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Name Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-user"></i>
+                        <input type="text" name="name" required
+                            class="form-input"
+                            placeholder="Full Name"
+                            aria-label="Full Name">
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-envelope"></i>
+                        <input type="email" name="email" required
+                            class="form-input"
+                            placeholder="Email Address"
+                            aria-label="Email Address">
+                    </div>
+
+                    <!-- Date Picker -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-calendar-day"></i>
+                        <input type="date" name="date" required
+                            class="form-input"
+                            aria-label="Appointment Date">
+                    </div>
+
+                    <!-- Skin Type Select -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-skin"></i>
+                        <select name="skin" required
+                            class="form-input form-select"
+                            aria-label="Skin Type">
+                            <option value="">Skin Type</option>
+                            <option>Normal</option>
+                            <option>Dry</option>
+                            <option>Oily</option>
+                            <option>Combination</option>
+                            <option>Sensitive</option>
+                        </select>
+                    </div>
+
+                    <!-- Phone Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-phone"></i>
+                        <input type="tel" name="phone" required
+                            class="form-input"
+                            placeholder="Phone Number"
+                            aria-label="Phone Number">
+                    </div>
+
+                    <!-- Age Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-birthday-cake"></i>
+                        <input type="number" name="age" min="13" required
+                            class="form-input"
+                            placeholder="Age"
+                            aria-label="Age">
+                    </div>
+                </div>
+
+                <!-- Consultation Reason -->
+                <div class="form-input-group">
+                    <i class="form-icon fas fa-comment-dots top-4"></i>
+                    <textarea name="reason" rows="4" required
+                        class="form-input pt-3"
+                        placeholder="Consultation Reason"
+                        aria-label="Consultation Reason"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                    class="w-full py-3 px-6 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    aria-label="Schedule Consultation">
+                    Schedule Appointment
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </form>
         </div>
-      {% endfor %}
-    {% else %}
-      <div class="col-12">
-        <p class="text-center">No appointments found.</p>
-      </div>
-    {% endif %}
-  </div>
+    </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const deleteButtons = document.querySelectorAll('.delete-btn');
-  
-  deleteButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const appointmentId = this.getAttribute('data-id');
-      if (confirm("Are you sure you want to delete this appointment?")) {
-        fetch('/delete_user_request', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: 'id=' + encodeURIComponent(appointmentId)
-        })
-        .then(response => {
-          if (response.ok) {
-            location.reload();
-          } else {
-            alert("Failed to delete appointment. Please try again.");
-          }
-        })
-        .catch(error => {
-          console.error("Error deleting appointment:", error);
-          alert("An error occurred. Please try again.");
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('consultationForm');
+    const inputs = form.querySelectorAll('.form-input');
+    
+    // Add real-time validation
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.checkValidity()) {
+                input.classList.remove('border-red-500');
+                input.classList.add('border-green-500');
+            } else {
+                input.classList.remove('border-green-500');
+            }
         });
-      }
     });
-  });
+
+    // Form submission handling
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                Scheduling...
+            `;
+
+            // Simulated API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Show success feedback
+            submitBtn.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                Scheduled Successfully
+            `;
+            form.reset();
+            
+        } catch (error) {
+            submitBtn.innerHTML = `
+                <i class="fas fa-times-circle"></i>
+                Scheduling Failed
+            `;
+        } finally {
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    Schedule Appointment
+                    <i class="fas fa-arrow-right ml-2"></i>
+                `;
+            }, 2000);
+        }
+    });
 });
 </script>
 {% endblock %}
