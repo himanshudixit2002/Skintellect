@@ -2,13 +2,13 @@
 
 {% block content %}
 <style>
-  /* Global Blue Theme & Professional Styling */
+  /* Global Styling and Blue Theme */
   body {
-      background-color: #f0f8ff; /* AliceBlue */
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #f7fbff; /* Light blue background */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .container-main {
-      min-height: 90vh;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -17,134 +17,153 @@
   h1, h2, h3, h4 {
       font-weight: 700;
   }
-  /* Upload Box */
+  /* Upload Box Styling */
   .upload-box {
-      background: rgba(255, 255, 255, 0.9);
-      border: 2px dashed #007BFF;
-      border-radius: 12px;
-      padding: 40px;
+      background: #ffffff;
+      border: 3px dashed #007BFF;
+      border-radius: 15px;
+      padding: 50px;
       text-align: center;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
+      transition: background-color 0.4s, border-color 0.4s;
       cursor: pointer;
+      margin-bottom: 20px;
   }
   .upload-box:hover {
-      background: #e6f0ff;
+      background: #e9f2ff;
       border-color: #0056b3;
   }
   .upload-box input[type="file"] {
       display: none;
+  }
+  .upload-box h3 {
+      color: #007BFF;
+      margin-bottom: 10px;
+  }
+  .upload-box p {
+      color: #555;
   }
   .feedback {
       color: #007BFF;
       font-size: 1.1rem;
       margin-top: 10px;
   }
-  /* Results Containers */
+  /* Button Styling */
+  .btn-blue {
+      background-color: #007BFF;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 30px;
+      font-size: 1.2rem;
+      color: #fff;
+      transition: background-color 0.4s, transform 0.3s;
+  }
+  .btn-blue:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+  }
+  /* Results Section Styling */
   .results-section {
       margin-top: 30px;
   }
-  .predictions-container, .recommendations-container {
+  .card-custom {
       background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      margin-top: 20px;
-      width: 100%;
-      max-width: 600px;
   }
-  .condition-title {
+  .card-title {
       color: #007BFF;
       font-weight: bold;
-      margin-bottom: 10px;
   }
-  .product-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+  .list-group-item {
+      border: none;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
   }
-  .product-list li {
-      padding: 10px;
-      border-bottom: 1px solid #e0e0e0;
-  }
-  .product-list li:last-child {
+  .list-group-item:last-child {
       border-bottom: none;
   }
-  /* Annotated Image */
+  /* Annotated Image Styling */
   .annotated-img {
+      max-width: 100%;
+      border: 3px solid #007BFF;
+      border-radius: 12px;
       margin-top: 20px;
-      max-height: 400px;
-      width: 100%;
-      border: 2px solid #007BFF;
-      border-radius: 8px;
-      object-fit: contain;
+      transition: opacity 0.5s;
   }
-  /* Blue Button */
-  .blue-button {
-      background-color: #007BFF;
-      color: #fff;
-      font-size: 1.2rem;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      transition: background-color 0.3s ease;
+  /* Animations */
+  .fade-in {
+      animation: fadeIn 0.8s ease-in;
   }
-  .blue-button:hover {
-      background-color: #0056b3;
+  @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
   }
 </style>
 
 <div class="container-main">
-  <div class="w-100" style="max-width: 600px;">
-    <h1 class="text-center mb-3" style="color: #007BFF; font-size: 2.5rem;">AI Skin Analysis</h1>
-    <p class="text-center mb-4" style="color: #555;">Upload your image for an expert AI evaluation of your skin.</p>
+  <div class="w-100" style="max-width: 650px;">
+    <h1 class="text-center mb-4" style="color: #007BFF; font-size: 2.8rem;">AI Skin Analysis</h1>
+    <p class="text-center mb-4" style="color: #555;">
+      Upload your image to receive an expert AI evaluation of your skin along with personalized product recommendations.
+    </p>
     
     <!-- Upload Form -->
     <form action="/predict" method="post" enctype="multipart/form-data">
       <div class="upload-box" id="uploadBox">
-        <input id="file" type="file" name="image" accept="image/*" required>
-        <h3>Drag & Drop your image here, or click to select</h3>
-        <p id="fileFeedback" class="feedback" style="display: none;">File Selected!</p>
+        <input id="fileInput" type="file" name="image" accept="image/*" required>
+        <h3>Drag & Drop or Click to Select Your Image</h3>
+        <p>Supported formats: JPG, PNG, GIF</p>
+        <p id="fileFeedback" class="feedback" style="display: none;"></p>
       </div>
-      <div class="text-center mt-3">
-        <button class="blue-button" type="submit">Predict</button>
+      <div class="text-center">
+        <button class="btn-blue" type="submit">Analyze Skin</button>
       </div>
     </form>
 
-    <!-- Results Section (Rendered after form submission) -->
+    <!-- Results Section -->
     <div id="resultsSection" class="results-section" style="display: none;">
-      <div class="predictions-container" id="predictionsContainer">
-        <h2 class="condition-title">Predictions:</h2>
-        <ul id="predictionList" class="product-list"></ul>
+      <div class="card-custom fade-in">
+        <h2 class="card-title">Detected Conditions</h2>
+        <ul id="conditionsList" class="list-group"></ul>
       </div>
-      <div class="recommendations-container" id="recommendationsContainer">
-        <h2 class="condition-title">Recommendations:</h2>
-        <ul id="recommendationList" class="product-list"></ul>
+      <div class="card-custom fade-in">
+        <h2 class="card-title">Product Recommendations</h2>
+        <div id="recommendationsContainer" class="row"></div>
       </div>
-      <img id="annotatedImage" class="annotated-img" src="" alt="Annotated Image" style="display: none;">
+      <div class="text-center fade-in">
+        <h2 class="card-title">Annotated Image</h2>
+        <img id="annotatedImage" class="annotated-img" src="" alt="Annotated Image" style="display: none;">
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  // Handle file input click & feedback
-  const fileInput = document.getElementById('file');
+  // Get DOM Elements
   const uploadBox = document.getElementById('uploadBox');
+  const fileInput = document.getElementById('fileInput');
   const fileFeedback = document.getElementById('fileFeedback');
+  const resultsSection = document.getElementById('resultsSection');
+  const conditionsList = document.getElementById('conditionsList');
+  const recommendationsContainer = document.getElementById('recommendationsContainer');
+  const annotatedImage = document.getElementById('annotatedImage');
 
-  uploadBox.addEventListener('click', () => {
-      fileInput.click();
-  });
+  // Trigger file input on click
+  uploadBox.addEventListener('click', () => fileInput.click());
 
+  // Show file name feedback when a file is selected
   fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
           fileFeedback.style.display = 'block';
-          fileFeedback.textContent = "File Selected: " + fileInput.files[0].name;
+          fileFeedback.textContent = "Selected File: " + fileInput.files[0].name;
       } else {
           fileFeedback.style.display = 'none';
       }
   });
 
-  // Parse prediction data passed from Flask (if any)
+  // Check if prediction data was passed from the server (if the page is reloaded with data)
   var data = '{{ data | tojson | safe }}';
   if (data) {
       try {
@@ -152,63 +171,76 @@
           if (Object.keys(jsonData).length > 0) {
               renderResults(jsonData);
           }
-      } catch(e) {
-          console.error("Error parsing JSON data: ", e);
+      } catch (e) {
+          console.error("Error parsing JSON data:", e);
       }
   }
 
+  // Function to render the results from JSON data
   function renderResults(jsonData) {
-      // Render Predictions
-      const predictionList = document.getElementById('predictionList');
-      predictionList.innerHTML = '';
+      // Render Detected Conditions
+      conditionsList.innerHTML = '';
       if (jsonData.classes && jsonData.classes.length > 0) {
           jsonData.classes.forEach(condition => {
               const li = document.createElement('li');
+              li.className = 'list-group-item';
               li.textContent = condition;
-              predictionList.appendChild(li);
+              conditionsList.appendChild(li);
           });
       } else {
-          predictionList.innerHTML = '<li>No predictions available.</li>';
+          conditionsList.innerHTML = '<li class="list-group-item">No conditions detected.</li>';
       }
-      document.getElementById('predictionsContainer').style.display = 'block';
-
+      
       // Render Recommendations
-      const recommendationList = document.getElementById('recommendationList');
-      recommendationList.innerHTML = '';
+      recommendationsContainer.innerHTML = '';
       if (jsonData.recommendations && jsonData.recommendations.length > 0) {
-          jsonData.recommendations.forEach(item => {
-              const condition = item[0];
-              const products = item[1];
-              let li = document.createElement('li');
-              li.innerHTML = `<strong>${condition}:</strong>`;
-              if (products && products.length > 0) {
-                  products.forEach(product => {
-                      let prodLi = document.createElement('li');
-                      // Clean up ingredients string if needed
+          jsonData.recommendations.forEach(rec => {
+              // Each recommendation is [condition, products]
+              const colDiv = document.createElement('div');
+              colDiv.className = 'col-md-6 mb-3';
+              const cardDiv = document.createElement('div');
+              cardDiv.className = 'card h-100';
+              const cardBody = document.createElement('div');
+              cardBody.className = 'card-body';
+              const title = document.createElement('h5');
+              title.className = 'card-title';
+              title.textContent = rec[0];
+              cardBody.appendChild(title);
+              if (rec[1] && rec[1].length > 0) {
+                  const listGroup = document.createElement('ul');
+                  listGroup.className = 'list-group list-group-flush';
+                  rec[1].forEach(product => {
+                      const item = document.createElement('li');
+                      item.className = 'list-group-item';
                       let ingredients = product.Ingredients.replace(/[^a-zA-Z0-9\s,]/g, "");
-                      prodLi.innerHTML = `<span><strong>Brand:</strong> ${product.Brand}</span><br>
-                                            <span><strong>Name:</strong> ${product.Name}</span><br>
-                                            <span><strong>Price:</strong> $${product.Price}</span><br>
-                                            <span><strong>Ingredients:</strong> ${ingredients}</span>`;
-                      li.appendChild(prodLi);
+                      item.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
+                                        Price: $${product.Price}<br>
+                                        Ingredients: ${ingredients}`;
+                      listGroup.appendChild(item);
                   });
+                  cardDiv.appendChild(listGroup);
               } else {
-                  li.innerHTML += " No products available.";
+                  const noProd = document.createElement('p');
+                  noProd.className = 'card-text';
+                  noProd.textContent = 'No products available for this condition.';
+                  cardBody.appendChild(noProd);
               }
-              recommendationList.appendChild(li);
+              cardDiv.appendChild(cardBody);
+              colDiv.appendChild(cardDiv);
+              recommendationsContainer.appendChild(colDiv);
           });
       } else {
-          recommendationList.innerHTML = '<li>No recommendations available.</li>';
+          recommendationsContainer.innerHTML = '<p>No recommendations available.</p>';
       }
-      document.getElementById('recommendationsContainer').style.display = 'block';
-
-      // Display Annotated Image if available
-      const annotatedImg = document.getElementById('annotatedImage');
+      
+      // Display Annotated Image if conditions exist
       if (jsonData.classes && jsonData.classes.length > 0) {
-          annotatedImg.src = "/static/annotations_0.jpg";
-          annotatedImg.style.display = 'block';
+          annotatedImage.src = "/static/annotations_0.jpg";
+          annotatedImage.style.display = 'block';
+      } else {
+          annotatedImage.style.display = 'none';
       }
-      document.getElementById('resultsSection').style.display = 'block';
+      resultsSection.style.display = 'block';
   }
 </script>
 {% endblock %}
