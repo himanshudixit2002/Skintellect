@@ -1,10 +1,9 @@
 {% extends "layout.html" %}
-{% block title %}SKINTELLECT | AI-Powered Dermatology{% endblock %}
-
+{% block title %}Skintellect{% endblock %}
 {% block content %}
 <div class="min-h-screen flex flex-col">
   <!-- Chatbot Interface -->
-  <div class="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg z-50">
+  <div id="chat-container" class="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg z-50">
     <div class="bg-emerald-400 text-white p-4 rounded-t-lg flex justify-between items-center">
       <h3 class="font-semibold">Skin Health Assistant</h3>
       <button id="close-chat" class="hover:text-emerald-100">×</button>
@@ -27,7 +26,7 @@
     </div>
   </div>
 
-  <!-- Rest of existing index.html content -->
+  <!-- Rest of your index.html content -->
   <div class="flex-grow relative overflow-hidden">
     <!-- ... existing hero section ... -->
   </div>
@@ -39,66 +38,73 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const chatMessages = document.getElementById('chat-messages')
-  const userInput = document.getElementById('user-input')
-  const sendBtn = document.getElementById('send-btn')
-  const closeBtn = document.getElementById('close-chat')
+  const chatContainer = document.getElementById('chat-container');
+  const chatMessages = document.getElementById('chat-messages');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const closeBtn = document.getElementById('close-chat');
 
   async function sendMessage() {
-    const message = userInput.value.trim()
-    if (!message) return
+    const message = userInput.value.trim();
+    if (!message) return;
 
-    // Add user message
+    // Add user message to chat window
     chatMessages.innerHTML += `
       <div class="flex justify-end">
         <div class="bg-emerald-100 p-3 rounded-lg max-w-xs">
           <p class="text-sm">${message}</p>
         </div>
       </div>
-    `
+    `;
     
-    // Clear input and scroll to bottom
-    userInput.value = ''
-    chatMessages.scrollTop = chatMessages.scrollHeight
+    // Clear the input and scroll to bottom
+    userInput.value = '';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
       const response = await fetch('/chatbot', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userInput: message })
-      })
-
-      if (!response.ok) throw new Error('Failed to get response')
-      
-      const data = await response.json()
-      
-      // Add bot response
+      });
+      const data = await response.json();
+      // Add bot reply to chat window
       chatMessages.innerHTML += `
         <div class="flex justify-start">
-          <div class="bg-blue-50 p-3 rounded-lg max-w-xs">
-            <p class="text-sm">${data.botReply}</p>
+          <div class="bg-gray-100 p-3 rounded-lg max-w-xs">
+            <p class="text-sm">${data.botReply || "I'm sorry, I didn't understand that."}</p>
           </div>
         </div>
-      `
+      `;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (error) {
       chatMessages.innerHTML += `
-        <div class="text-red-500 text-sm p-2">
-          Error: Could not get response from assistant
+        <div class="flex justify-start">
+          <div class="bg-red-100 p-3 rounded-lg max-w-xs">
+            <p class="text-sm">Error: Could not send message</p>
+          </div>
         </div>
-      `
+      `;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      console.error(error);
     }
-    
-    chatMessages.scrollTop = chatMessages.scrollHeight
   }
 
-  sendBtn.addEventListener('click', sendMessage)
-  userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage()
-  })
+  // Event listener for send button click
+  sendBtn.addEventListener('click', sendMessage);
 
+  // Allow sending message with the Enter key
+  userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Event listener for close button to hide chat widget
   closeBtn.addEventListener('click', () => {
-    document.querySelector('.fixed').classList.add('hidden')
-  })
-})
+    chatContainer.classList.add('hidden');
+  });
+});
 </script>
 {% endblock %}

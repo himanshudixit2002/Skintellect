@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 import uuid
 import cv2
 import pandas as pd
@@ -13,127 +13,125 @@ from roboflow import Roboflow
 import supervision as sv
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 
-# Load skincare products dataset
-df = pd.read_csv(r"dataset/updated_skincare_products.csv")
-
-# Load environment variables from .env
+# Load environment variables from .env file
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise Exception("OPENAI_API_KEY not set. Please add it to your .env file.")
 
+# Initialize Flask application
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.secret_key = '4545'
+app.secret_key = os.getenv("SECRET_KEY", "4545")
 DATABASE = 'app.db'
 
+# Load the skincare products dataset (ensure the path is correct)
+df = pd.read_csv(os.path.join("dataset", "updated_skincare_products.csv"))
 
 # ---------------------------
-# Database functions
+# Database Functions
 # ---------------------------
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row  # enable accessing columns by name
+    return conn
+
 def create_tables():
-    with sqlite3.connect(DATABASE) as connection:
+    with get_db_connection() as connection:
         cursor = connection.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL)''')
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS survey_responses (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        name TEXT NOT NULL,
-                        age TEXT NOT NULL,
-                        gender TEXT NOT NULL,
-                        concerns TEXT NOT NULL,
-                        acne_frequency TEXT NOT NULL,
-                        comedones_count TEXT NOT NULL,
-                        first_concern TEXT NOT NULL,
-                        cosmetic_usage TEXT NOT NULL,
-                        skin_reaction TEXT NOT NULL,
-                        skin_type TEXT NOT NULL,
-                        medications TEXT NOT NULL,
-                        skincare_routine TEXT NOT NULL,
-                        stress_level TEXT NOT NULL,
-                        FOREIGN KEY (user_id) REFERENCES users(id))''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS appointment( 
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT,
-                        email TEXT,
-                        date TEXT, 
-                        skin TEXT,
-                        phone TEXT,
-                        age TEXT,
-                        address TEXT, 
-                        status BOOLEAN,
-                        username TEXT)''')
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            age TEXT NOT NULL,
+            gender TEXT NOT NULL,
+            concerns TEXT NOT NULL,
+            acne_frequency TEXT NOT NULL,
+            comedones_count TEXT NOT NULL,
+            first_concern TEXT NOT NULL,
+            cosmetic_usage TEXT NOT NULL,
+            skin_reaction TEXT NOT NULL,
+            skin_type TEXT NOT NULL,
+            medications TEXT NOT NULL,
+            skincare_routine TEXT NOT NULL,
+            stress_level TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS appointment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT,
+            date TEXT,
+            skin TEXT,
+            phone TEXT,
+            age TEXT,
+            address TEXT,
+            status BOOLEAN,
+            username TEXT
+        )''')
         connection.commit()
-
 
 def insert_user(username, password):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-        connection.commit()
-
+    with get_db_connection() as conn:
+        conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        conn.commit()
 
 def get_user(username):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        return cursor.fetchone()
-
+    with get_db_connection() as conn:
+        user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    return user
 
 def insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("""INSERT INTO survey_responses 
+    with get_db_connection() as conn:
+        conn.execute(
+            """INSERT INTO survey_responses 
             (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level))
-        connection.commit()
-
-
-def insert_appointment_data(name, email, date, skin, phone, age, address, status, username):
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute('''INSERT INTO appointment (name, email, date, skin, phone, age, address, status, username)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)''', (name, email, date, skin, phone, age, address, status, username))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
+        )
         conn.commit()
-
-
-def findappointment(user):
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute("SELECT * FROM appointment WHERE username = ?", (user,))
-        appointments = c.fetchall()
-    return appointments
-
-
-def findallappointment():
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute("SELECT * FROM appointment")
-        appointments = c.fetchall()
-    return appointments
-
 
 def get_survey_response(user_id):
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM survey_responses WHERE user_id = ?", (user_id,))
-        return cursor.fetchone()  
+    with get_db_connection() as conn:
+        response = conn.execute("SELECT * FROM survey_responses WHERE user_id = ?", (user_id,)).fetchone()
+    return response
 
-
-def update_appointment_status(appointment_id):
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute("UPDATE appointment SET status = ? WHERE id = ?", (True, appointment_id))
+def insert_appointment_data(name, email, date, skin, phone, age, address, status, username):
+    with get_db_connection() as conn:
+        conn.execute(
+            '''INSERT INTO appointment (name, email, date, skin, phone, age, address, status, username)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (name, email, date, skin, phone, age, address, status, username)
+        )
         conn.commit()
 
+def findappointment(username):
+    with get_db_connection() as conn:
+        appointments = conn.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
+    return appointments
 
-def init_app():
-    create_tables()
+def findallappointment():
+    with get_db_connection() as conn:
+        appointments = conn.execute("SELECT * FROM appointment").fetchall()
+    return appointments
 
+def update_appointment_status(appointment_id):
+    with get_db_connection() as conn:
+        conn.execute("UPDATE appointment SET status = ? WHERE id = ?", (True, appointment_id))
+        conn.commit()
+
+def delete_appointment(appointment_id):
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM appointment WHERE id = ?", (appointment_id,))
+        conn.commit()
+
+# Create tables at startup
+create_tables()
 
 # ---------------------------
 # Chatbot Endpoint
@@ -143,282 +141,240 @@ def chatbot():
     user_input = request.json.get("userInput")
     if not user_input:
         return jsonify({"error": "User input is required"}), 400
-
     try:
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "Content-Type": "application/json",
         }
         data = {
-            "model": "gpt-4",
+            "model": "gpt-3.5-turbo",  # or "gpt-4" if your key supports it
             "messages": [{"role": "user", "content": user_input}],
-            "max_tokens": 100,
+            "max_tokens": 150,
         }
-
         response = requests.post("https://api.openai.com/v1/chat/completions", json=data, headers=headers)
+        response.raise_for_status()  # This will raise an exception for non-200 responses
         response_json = response.json()
         if "error" in response_json:
-            return jsonify({"error": response_json["error"]["message"]}), 500
-
+            error_message = response_json["error"].get("message", "Unknown error")
+            print("OpenAI API Error:", error_message)
+            return jsonify({"error": error_message}), 500
         bot_reply = response_json["choices"][0]["message"]["content"]
         return jsonify({"botReply": bot_reply})
-
     except Exception as e:
+        import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
+
 # ---------------------------
-# Other Routes
+# User Authentication & Survey Routes
 # ---------------------------
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    # If the user is not logged in, redirect to the login page.
+    if "username" not in session:
+        return redirect(url_for("login"))
+    return render_template("index.html")
 
-
-@app.route('/register', methods=['GET', 'POST'])
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        name = request.form.get('name', '')
-        age = request.form.get('age', '')
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        name = request.form.get("name", "")
+        age = request.form.get("age", "")
         hashed_password = generate_password_hash(password)
-
         if get_user(username):
-            return "Username already exists. Please choose a different one."
+            return render_template("register.html", error="Username already exists.")
         insert_user(username, hashed_password)
-        session['username'] = username
-        session['name'] = name
-        session['age'] = age
-        return redirect(url_for('login'))
-    return render_template('register.html')
+        session["username"] = username
+        session["name"] = name
+        session["age"] = age
+        return redirect(url_for("login"))
+    return render_template("register.html")
 
-
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
         user = get_user(username)
-        if user and check_password_hash(user[2], password):
-            session['username'] = username
-            user_id = user[0]
-            if username == 'doctor1':
-                return redirect(url_for('allappoint'))
-            survey_response = get_survey_response(user_id)
+        if user and check_password_hash(user["password"], password):
+            session["username"] = username
+            # Special redirect for the doctor account
+            if username == "doctor1":
+                return redirect(url_for("allappointments"))
+            survey_response = get_survey_response(user["id"])
             if survey_response:
-                return redirect('/profile')
+                return redirect(url_for("profile"))
             else:
-                return redirect('/survey')
-        return "Invalid username or password", 400 
-    return render_template('login.html')
+                return redirect(url_for("survey"))
+        return render_template("login.html", error="Invalid username or password")
+    return render_template("login.html")
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
-@app.route('/survey', methods=['GET', 'POST'])
+@app.route("/survey", methods=["GET", "POST"])
 def survey():
-    if 'username' not in session:
-        return redirect('/')
-    if request.method == 'POST':
-        user_id = get_user(session['username'])[0]
-        name = session.get('name', '')
-        age = session.get('age', '')
-        gender = request.form['gender']
-        concerns = ",".join(request.form.getlist('concerns'))
-        acne_frequency = request.form['acne_frequency']
-        comedones_count = request.form['comedones_count']
-        first_concern = request.form['first_concern']
-        cosmetics_usage = request.form['cosmetics_usage']
-        skin_reaction = request.form['skin_reaction']
-        skin_type = request.form['skin_type_details']
-        medications = request.form['medications']
-        skincare_routine = request.form['skincare_routine']
-        stress_level = request.form['stress_level']
-
+    if "username" not in session:
+        return redirect(url_for("index"))
+    if request.method == "POST":
+        user = get_user(session["username"])
+        user_id = user["id"]
+        name = session.get("name", "")
+        age = session.get("age", "")
+        gender = request.form["gender"]
+        concerns = ",".join(request.form.getlist("concerns"))
+        acne_frequency = request.form["acne_frequency"]
+        comedones_count = request.form["comedones_count"]
+        first_concern = request.form["first_concern"]
+        cosmetics_usage = request.form["cosmetics_usage"]
+        skin_reaction = request.form["skin_reaction"]
+        skin_type = request.form["skin_type_details"]
+        medications = request.form["medications"]
+        skincare_routine = request.form["skincare_routine"]
+        stress_level = request.form["stress_level"]
         insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count,
                                first_concern, cosmetics_usage, skin_reaction, skin_type,
                                medications, skincare_routine, stress_level)
-        return redirect(url_for('profile'))
-    return render_template('survey.html', name=session.get('name', ''), age=session.get('age', ''))
+        return redirect(url_for("profile"))
+    return render_template("survey.html", name=session.get("name", ""), age=session.get("age", ""))
 
-
-@app.route('/profile')
+@app.route("/profile")
 def profile():
-    if 'username' in session:
-        user_id = get_user(session['username'])[0]
-        survey_response = get_survey_response(user_id)
+    if "username" in session:
+        user = get_user(session["username"])
+        survey_response = get_survey_response(user["id"])
         if survey_response:
-            return render_template('profile.html', 
-                                name=survey_response[2],
-                                age=survey_response[3],
-                                gender=survey_response[4],
-                                concerns=survey_response[5],
-                                acne_frequency=survey_response[6],
-                                comedones_count=survey_response[7],
-                                first_concern=survey_response[8],
-                                cosmetics_usage=survey_response[9],
-                                skin_reaction=survey_response[10],
-                                skin_type_details=survey_response[11],
-                                medications=survey_response[12],
-                                skincare_routine=survey_response[13],
-                                stress_level=survey_response[14])
-    return redirect('/')
+            return render_template("profile.html", survey=survey_response)
+    return redirect(url_for("index"))
 
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
-
-
-@app.route('/bookappointment')
+# ---------------------------
+# Appointment Routes
+# ---------------------------
+@app.route("/bookappointment")
 def bookappointment():
-    return render_template('bookappointment.html')
-
+    return render_template("bookappointment.html")
 
 @app.route("/appointment", methods=["POST"])
 def appointment():
+    # Retrieve fields from the form.
     name = request.form.get("name")
     email = request.form.get("email")
     date = request.form.get("date")
     skin = request.form.get("skin")
     phone = request.form.get("phone")
     age = request.form.get("age")
-    address = request.form.get("address")
-    username = session['username']
+    # Use the "reason" field (since that's what your consultation form sends)
+    address = request.form.get("reason")  # Alternatively, rename the form field to "address"
+    username = session.get("username")
     status = False
     insert_appointment_data(name, email, date, skin, phone, age, address, status, username)
-    return redirect(url_for('bookappointment'))
+    
+    # Redirect to the user appointments page so the user can see their appointment
+    return redirect(url_for("userappoint"))
 
 
 @app.route("/allappointments")
-def allappoint():
-    all_appointments = findallappointment()
-    return render_template('doctor.html', appointments=all_appointments)
-
+def allappointments():
+    appointments = findallappointment()
+    return render_template("doctor.html", appointments=appointments)
 
 @app.route("/userappointment")
 def userappoint():
-    user = session['username']
-    all_appointments = findappointment(user)
-    return render_template('userappointment.html', all_appointments=all_appointments)
+    username = session.get("username")
+    appointments = findappointment(username)
+    return render_template("userappointment.html", all_appointments=appointments)
 
-
-@app.route("/update_status", methods=["POST"])
-def update_status():
-    if request.method == "POST":
-        appointment_id = request.form.get("appointment_id")
-        update_appointment_status(appointment_id)
-        return "updated"
-
+@app.route("/face_analysis", methods=["POST"])
+def face_analysis():
+    appointment_id = request.form.get("appointment_id")
+    update_appointment_status(appointment_id)
+    return jsonify({"message": "updated"})
 
 @app.route("/delete_user_request", methods=["POST"])
 def delete_user_request():
-    if request.method == "POST":
-        appointment_id = request.form.get("id")
-        with sqlite3.connect(DATABASE) as conn:
-            c = conn.cursor()
-            c.execute("DELETE FROM appointment WHERE id = ?", (appointment_id,))
-            conn.commit()
-        return "deleted successfully"
-
-
-@app.route("/doctor")
-def doctor():
-    return render_template('doctor.html')
-
+    appointment_id = request.form.get("id")
+    delete_appointment(appointment_id)
+    return jsonify({"message": "deleted successfully"})
 
 # ---------------------------
-# Skin & Oiliness Detection (unchanged)
+# AI Skin Analysis & Product Recommendation
 # ---------------------------
-# Initialize the skin detection model using Roboflow
-rf_skin = Roboflow(api_key="8RSJzoEweFB7NxxNK6fg")
+# Initialize the Roboflow skin detection model
+rf_skin = Roboflow(api_key=os.getenv("ROBOFLOW_API_KEY", "9dsh7sHI8YmicqwPkdd2"))
 project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
 
-# Initialize the oilyness detection model using InferenceHTTPClient
+# Initialize the oiliness detection model
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="Gqf1hrF7jdAh8EsbOoTM"
+    api_key=os.getenv("OILINESS_API_KEY", "Gqf1hrF7jdAh8EsbOoTM")
 )
-
-# Mapping for oily skin class names
+# Mapping to convert oiliness model class names if needed
 class_mapping = {
     "Jenis Kulit Wajah - v6 2023-06-17 11-53am": "oily skin",
-    "-": "normal/dry skin"  
+    "-": "normal/dry skin"
 }
 
 def recommend_products_based_on_classes(classes):
     recommendations = []
-    df_columns_lower = [column.lower() for column in df.columns]
+    df_columns_lower = [col.lower() for col in df.columns]
     for skin_condition in classes:
-        skin_condition_lower = skin_condition.lower()
-        if skin_condition_lower in df_columns_lower:
-            original_column = df.columns[df_columns_lower.index(skin_condition_lower)]
-            filtered_products = df[df[original_column] == 1][['Brand', 'Name', 'Price', 'Ingredients']]
-            filtered_products['Ingredients'] = filtered_products['Ingredients'].apply(lambda x: ', '.join(x.split(', ')[:5]))
-            products_list = filtered_products.head(5).to_dict(orient='records')
-            recommendations.append((skin_condition, products_list))
-        else:
-            print(f"Warning: No column found for skin condition '{skin_condition}'")
+        condition_lower = skin_condition.lower()
+        if condition_lower in df_columns_lower:
+            original_column = df.columns[df_columns_lower.index(condition_lower)]
+            filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]]
+            filtered["Ingredients"] = filtered["Ingredients"].apply(lambda x: ", ".join(x.split(", ")[:5]))
+            products = filtered.head(5).to_dict(orient="records")
+            recommendations.append((skin_condition, products))
     return recommendations
 
-
-@app.route('/predict', methods=['POST', 'GET'])
+@app.route("/predict", methods=["GET", "POST"])
 def predict():
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
-            image_file = request.files['image']
-            image_filename = str(uuid.uuid4()) + '.jpg'
-            image_path = os.path.join('static', image_filename)
+            image_file = request.files["image"]
+            image_filename = str(uuid.uuid4()) + ".jpg"
+            image_path = os.path.join("static", image_filename)
             image_file.save(image_path)
             unique_classes = set()
-
             # Skin detection using Roboflow
             skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
-            skin_labels = [item["class"] for item in skin_result.get("predictions", [])]
-            for label in skin_labels:
-                unique_classes.add(label)
-
-            # Oilyness detection with confidence threshold
+            skin_labels = [pred["class"] for pred in skin_result.get("predictions", [])]
+            unique_classes.update(skin_labels)
+            # Oiliness detection with custom configuration
             custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
             with CLIENT.use_configuration(custom_configuration):
-                oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
-            
-            if not oilyness_result.get('predictions'):
+                oiliness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
+            if not oiliness_result.get("predictions"):
                 unique_classes.add("dryness")
             else:
-                oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
-                                      for prediction in oilyness_result.get('predictions', [])
-                                      if prediction.get('confidence', 0) >= 0.3]
-                for label in oilyness_classes:
-                    unique_classes.add(label)
-
+                oiliness_classes = [class_mapping.get(pred["class"], pred["class"]) for pred in oiliness_result.get("predictions", []) if pred.get("confidence", 0) >= 0.3]
+                unique_classes.update(oiliness_classes)
+            # Annotate image using Supervision
             image = cv2.imread(image_path)
             detections = sv.Detections.from_inference(skin_result)
+            box_annotator = sv.BoxAnnotator()
             label_annotator = sv.LabelAnnotator()
-            bounding_box_annotator = sv.BoxAnnotator()
-            annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
+            annotated_image = box_annotator.annotate(scene=image, detections=detections)
             annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-            
+            cv2.imwrite(os.path.join("static", "annotations_0.jpg"), annotated_image)
+            # Get product recommendations
             recommended_products = recommend_products_based_on_classes(list(unique_classes))
             prediction_data = {
-                'classes': list(unique_classes),
-                'recommendations': recommended_products
+                "classes": list(unique_classes),
+                "recommendations": recommended_products
             }
-            print(prediction_data)
-            
-            annotated_image_path = os.path.join('static', 'annotations_0.jpg')
-            cv2.imwrite(annotated_image_path, annotated_image)
-            return render_template('face_analysis.html', data=prediction_data)
+            return render_template("face_analysis.html", data=prediction_data)
         except Exception as e:
-            print("Error during prediction:", e)
             traceback.print_exc()
-            return "An error occurred while analyzing the image. Please try again.", 500
-    else:
-        return render_template('face_analysis.html', data={})
+            return "An error occurred during analysis.", 500
+    return render_template("face_analysis.html", data={})
 
-
-if __name__ == '__main__':
-    init_app()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

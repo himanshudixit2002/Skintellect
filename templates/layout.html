@@ -1,140 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Skintellect{% endblock %}</title>
-  
-  <!-- Tailwind CSS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}My Flask App{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- External Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background-color: #111827; color: white; font-family: Arial, sans-serif; }
-    .chat-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      max-width: 350px;
-      background: rgba(0, 0, 0, 0.8);
-      border-radius: 10px;
-      padding: 10px;
-      display: none;
-      z-index: 1000;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .chat-header {
-      font-weight: bold;
-      padding: 10px;
-      background: #1E40AF;
-      color: white;
-      border-radius: 10px 10px 0 0;
-      text-align: center;
-      cursor: pointer;
-    }
-    .chat-body {
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-    }
-    .chat-footer {
-      display: flex;
-      gap: 5px;
-      padding: 10px;
-    }
-    .chat-footer input {
-      flex-grow: 1;
-      padding: 5px;
-      border-radius: 5px;
-      border: 1px solid gray;
-    }
-    .chat-footer button {
-      background: #1E40AF;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
+    body {
+      overflow-x: hidden;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("../static/assets/bg5.webp");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      padding-top: 80px;
     }
   </style>
-  
-  {% block head %}{% endblock %}
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="bg-blue-900 text-white p-4 flex justify-between items-center">
-    <div class="text-2xl font-bold">Skintellect</div>
-    <ul class="flex space-x-4">
-      <li><a href="{{ url_for('index') }}" class="hover:text-emerald-300">Home</a></li>
-      <li><a href="#" class="hover:text-emerald-300">Chatbot</a></li>
-      <li><a href="{{ url_for('profile') }}" class="hover:text-emerald-300">Profile</a></li>
-      <li><a href="{{ url_for('logout') }}" class="hover:text-emerald-300">Logout</a></li>
+
+  <!-- Navbar with consistent background -->
+  <nav class="fixed top-0 left-0 shadow-lg p-4 flex justify-between items-center w-full z-50 bg-gradient-to-r from-purple-800 via-blue-800 to-purple-800 text-white">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-leaf text-3xl text-emerald-400 animate-pulse"></i>
+      <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
+        SKINTELLECT
+      </span>
+    </div>
+
+    <!-- Dropdown Menu for Mobile -->
+    <div class="relative md:hidden">
+      <button id="dropdown-btn" class="text-2xl">
+        <i class="bi bi-list"></i>
+      </button>
+      <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg border border-gray-700 text-white">
+        <a href="{{ url_for('bookappointment') }}" class="block px-4 py-2 hover:bg-gray-700">New Appointment</a>
+        <a href="{{ url_for('predict') }}" class="block px-4 py-2 hover:bg-gray-700">Face Analysis</a>
+        <a href="{{ url_for('userappoint') }}" class="block px-4 py-2 hover:bg-gray-700">My Appointments</a>
+        <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-700">Profile</a>
+        <!-- Dedicated Chatbot Button in Mobile Dropdown -->
+        <a href="#" id="dropdown-chat-button" class="block px-4 py-2 hover:bg-gray-700">Chatbot</a>
+        
+        <!-- APK Download Button (Mobile Only) -->
+        <a href="https://drive.google.com/uc?export=download&id=1bhEXK-Cr6bJQ40pUQlmvm1dHwXCpT5mP" 
+           class="block px-4 py-2 mt-2 mx-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg 
+                  hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
+           download="Skintellect.apk">
+          <i class="fas fa-download mr-2"></i>APK Download
+        </a>
+
+        <a href="{{ url_for('logout') }}" class="block px-4 py-2 hover:bg-gray-700">Logout</a>
+      </div>
+    </div>
+
+    <!-- Menu for Larger Screens -->
+    <ul class="hidden md:flex flex-wrap justify-end gap-4 md:gap-8 text-center md:flex-nowrap w-full md:w-auto">
+      <li><a href="{{ url_for('bookappointment') }}" class="block md:inline-block hover:text-gray-400">New Appointment</a></li>
+      <li><a href="{{ url_for('predict') }}" class="block md:inline-block hover:text-gray-400">Face Analysis</a></li>
+      <li><a href="{{ url_for('userappoint') }}" class="block md:inline-block hover:text-gray-400">My Appointments</a></li>
+      <li><a href="{{ url_for('profile') }}" class="block md:inline-block hover:text-gray-400">Profile</a></li>
+      <li><a href="{{ url_for('logout') }}" class="block md:inline-block hover:text-gray-400">Logout</a></li>
+      <!-- Dedicated Chatbot Button in Navbar -->
+      <li><a href="#" id="nav-chat-button" class="block md:inline-block hover:text-gray-400">Chatbot</a></li>
     </ul>
   </nav>
-  
-  <!-- Main Content -->
-  <div class="container mx-auto p-6">
+
+  <div class="content p-4 flex-grow w-full">
     {% block content %}{% endblock %}
   </div>
-  
-  <!-- Chatbot Widget -->
-  <div class="chat-container" id="chat-container">
-    <div class="chat-header" onclick="toggleChat()">Skincare AI Chatbot</div>
-    <div class="chat-body" id="chat-box"></div>
-    <div class="chat-footer">
-      <input type="text" id="chat-input" placeholder="Ask a skincare question...">
-      <button onclick="sendMessage()">Send</button>
+
+  <!-- Chatbot Interface (initially hidden) -->
+  <div id="chat-container" class="hidden fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg z-50">
+    <div class="bg-emerald-400 text-white p-4 rounded-t-lg flex justify-between items-center">
+      <h3 class="font-semibold">Skin Health Assistant</h3>
+      <button id="close-chat" class="hover:text-emerald-100">×</button>
+    </div>
+    <div class="h-96 p-4 flex flex-col">
+      <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-2">
+        <div class="bg-blue-50 p-3 rounded-lg">
+          <p class="text-sm">
+            Hello! I'm your skin health assistant. Ask me about skincare routines, product recommendations, or any skin concerns.
+          </p>
+        </div>
+      </div>
+      <div class="border-t pt-4">
+        <div class="flex space-x-2">
+          <input type="text" id="user-input" placeholder="Type your message..." 
+                 class="flex-1 border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
+          <button id="send-btn" class="bg-emerald-400 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 text-sm">
+            Send
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-  
-  <!-- Chatbot Toggle Button -->
-  <button onclick="toggleChat()" class="fixed bottom-10 right-10 bg-blue-600 p-3 rounded-full text-white text-xl">💬</button>
-  
+
+  <!-- Open Chat Button (visible when the chat widget is closed manually) -->
+  <button id="open-chat" class="hidden fixed bottom-4 right-4 w-16 h-16 rounded-full bg-emerald-400 text-white shadow-lg z-50">
+    Chat
+  </button>
+
   <!-- Footer -->
-  <footer class="bg-blue-900 text-center py-4">
-    <p>&copy; 2025 Skintellect. All rights reserved.</p>
+  <footer class="bg-gradient-to-r from-purple-800 via-blue-800 to-purple-800 text-white py-8 mt-12 border-t border-blue-400/20">
+    <div class="container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="text-center md:text-left">
+        <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300 mb-2">SKINTELLECT</h2>
+        <p class="text-sm text-blue-100">AI-Driven Dermatology Solutions</p>
+        <div class="mt-4 space-y-1">
+          <p class="text-xs text-blue-200"><i class="fas fa-envelope mr-2"></i>himanshudixit2406@gmail.com</p>
+          <p class="text-xs text-blue-200"><i class="fas fa-phone mr-2"></i>+917390922922</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="font-semibold text-blue-200 mb-2">Quick Links</h3>
+        <div class="flex flex-col space-y-2">
+          <a href="{{ url_for('predict') }}" class="text-sm hover:text-emerald-300">Skin Analysis</a>
+          <a href="{{ url_for('bookappointment') }}" class="text-sm hover:text-emerald-300">Consultation</a>
+          <a href="{{ url_for('profile') }}" class="text-sm hover:text-emerald-300">Profile</a>
+          <a href="{{ url_for('userappoint') }}" class="text-sm hover:text-emerald-300">Appointments</a>
+          <!-- Dedicated Chatbot Button in Footer -->
+          <a href="#" id="footer-chat-button" class="text-sm hover:text-emerald-300">Chatbot</a>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="font-semibold text-blue-200 mb-2">Connect With Us</h3>
+        <div class="flex space-x-4 text-xl">
+          <a href="https://www.instagram.com/himanshu.dixitt?igsh=MXExMWI4ZzIxNDA4cw==" class="hover:text-emerald-300 transition-colors"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.linkedin.com/in/himanshudixit2406/" class="hover:text-emerald-300 transition-colors"><i class="fab fa-linkedin"></i></a>
+          <a href="https://github.com/himanshudixit2002" class="hover:text-emerald-300 transition-colors"><i class="fab fa-github"></i></a>
+        </div>
+        <div class="mt-4">
+          <div class="flex mt-2">
+            <input type="email" placeholder="himanshudixit2406" class="p-1 text-sm rounded-l bg-blue-900/50 border border-blue-400/30">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-sm mt-4">
+      <div class="text-center text-blue-300 text-sm mt-6">
+        &copy; 2025 SKINTELLECT. All rights reserved. | <a href="#" class="hover:text-emerald-300">Privacy Policy</a> | <a href="#" class="hover:text-emerald-300">Terms of Service</a>
+      </div>
+    </div>
   </footer>
-  
+
   <script>
-    function toggleChat() {
-      var chatContainer = document.getElementById("chat-container");
-      if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
-        chatContainer.style.display = "block";
-      } else {
-        chatContainer.style.display = "none";
-      }
-    }
+    // Toggle dropdown menu on mobile
+    document.getElementById("dropdown-btn").addEventListener("click", function() {
+      let menu = document.getElementById("dropdown-menu");
+      menu.classList.toggle("hidden");
+    });
+
+    // Chat widget functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const chatContainer = document.getElementById('chat-container');
+      const chatMessages = document.getElementById('chat-messages');
+      const userInput = document.getElementById('user-input');
+      const sendBtn = document.getElementById('send-btn');
+      const closeBtn = document.getElementById('close-chat');
+      const openChatBtn = document.getElementById('open-chat');
+      
+      async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
   
-    async function sendMessage() {
-      var inputField = document.getElementById("chat-input");
-      var userMessage = inputField.value.trim();
-      if (!userMessage) return;
+        // Add user message to chat window
+        chatMessages.innerHTML += `
+          <div class="flex justify-end">
+            <div class="bg-emerald-100 p-3 rounded-lg max-w-xs">
+              <p class="text-sm">${message}</p>
+            </div>
+          </div>
+        `;
+        
+        // Clear the input and scroll to bottom
+        userInput.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
   
-      var chatBox = document.getElementById("chat-box");
-      chatBox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
-      inputField.value = "";
-  
-      try {
-        let response = await fetch("/chatbot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userInput: userMessage }),
-        });
-        let data = await response.json();
-        if (data.error) {
-          chatBox.innerHTML += `<p class="text-red-500"><strong>Error:</strong> ${data.error}</p>`;
-        } else {
-          chatBox.innerHTML += `<p><strong>Bot:</strong> ${data.botReply}</p>`;
+        try {
+          const response = await fetch('/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userInput: message })
+          });
+          const data = await response.json();
+          // Add bot reply to chat window
+          chatMessages.innerHTML += `
+            <div class="flex justify-start">
+              <div class="bg-gray-100 p-3 rounded-lg max-w-xs">
+                <p class="text-sm">${data.botReply || "I'm sorry, I didn't understand that."}</p>
+              </div>
+            </div>
+          `;
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } catch (error) {
+          chatMessages.innerHTML += `
+            <div class="flex justify-start">
+              <div class="bg-red-100 p-3 rounded-lg max-w-xs">
+                <p class="text-sm">Error: Could not send message</p>
+              </div>
+            </div>
+          `;
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          console.error(error);
         }
-      } catch (error) {
-        chatBox.innerHTML += `<p class="text-red-500"><strong>Error:</strong> Could not get a response.</p>`;
       }
   
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-  </script>
+      sendBtn.addEventListener('click', sendMessage);
   
-  {% block scripts %}{% endblock %}
+      userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+  
+      closeBtn.addEventListener('click', () => {
+        chatContainer.classList.add('hidden');
+        openChatBtn.classList.remove('hidden');
+      });
+  
+      openChatBtn.addEventListener('click', () => {
+        chatContainer.classList.remove('hidden');
+        openChatBtn.classList.add('hidden');
+      });
+  
+      // Helper function to open the chat widget
+      function openChat() {
+        chatContainer.classList.remove('hidden');
+        openChatBtn.classList.add('hidden');
+      }
+      
+      // Attach event listeners to dedicated Chatbot buttons if they exist
+      const navChatButton = document.getElementById("nav-chat-button");
+      const footerChatButton = document.getElementById("footer-chat-button");
+      const dropdownChatButton = document.getElementById("dropdown-chat-button");
+      
+      if (navChatButton) {
+          navChatButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            openChat();
+          });
+      }
+      if (footerChatButton) {
+          footerChatButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            openChat();
+          });
+      }
+      if (dropdownChatButton) {
+          dropdownChatButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            openChat();
+          });
+      }
+    });
+  </script>
 </body>
 </html>
