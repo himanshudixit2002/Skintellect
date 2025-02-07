@@ -1,139 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Skintellect{% endblock %}</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- External Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background-color: #111827;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        .chat-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            max-width: 350px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
-            padding: 10px;
-            display: none;
-            z-index: 1000;
-        }
-        .chat-header {
-            font-weight: bold;
-            padding: 10px;
-            background: #1E40AF;
-            color: white;
-            border-radius: 10px 10px 0 0;
-            text-align: center;
-            cursor: pointer;
-        }
-        .chat-body {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        .chat-footer {
-            display: flex;
-            gap: 5px;
-            padding: 10px;
-        }
-        .chat-footer input {
-            flex-grow: 1;
-            padding: 5px;
-            border-radius: 5px;
-            border: 1px solid gray;
-        }
-        .chat-footer button {
-            background: #1E40AF;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Skintellect{% endblock %}</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- External Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #111827; color: white; font-family: Arial, sans-serif; }
+    .chat-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      max-width: 350px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      padding: 10px;
+      display: none;
+      z-index: 1000;
+    }
+    .chat-header {
+      font-weight: bold;
+      padding: 10px;
+      background: #1E40AF;
+      color: white;
+      border-radius: 10px 10px 0 0;
+      text-align: center;
+      cursor: pointer;
+    }
+    .chat-body {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .chat-footer {
+      display: flex;
+      gap: 5px;
+      padding: 10px;
+    }
+    .chat-footer input {
+      flex-grow: 1;
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid gray;
+    }
+    .chat-footer button {
+      background: #1E40AF;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+  
+  {% block head %}{% endblock %}
 </head>
 <body>
-
-    <!-- Navbar -->
-    <nav class="bg-blue-900 text-white p-4 flex justify-between items-center">
-        <div class="text-2xl font-bold">Skintellect</div>
-        <ul class="flex space-x-4">
-            <li><a href="{{ url_for('index') }}" class="hover:text-emerald-300">Home</a></li>
-            <li><a href="#" class="hover:text-emerald-300">Chatbot</a></li>
-            <li><a href="{{ url_for('profile') }}" class="hover:text-emerald-300">Profile</a></li>
-            <li><a href="{{ url_for('logout') }}" class="hover:text-emerald-300">Logout</a></li>
-        </ul>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container mx-auto p-6">
-        {% block content %}{% endblock %}
+  <!-- Navbar -->
+  <nav class="bg-blue-900 text-white p-4 flex justify-between items-center">
+    <div class="text-2xl font-bold">Skintellect</div>
+    <ul class="flex space-x-4">
+      <li><a href="{{ url_for('index') }}" class="hover:text-emerald-300">Home</a></li>
+      <li><a href="#" class="hover:text-emerald-300">Chatbot</a></li>
+      <li><a href="{{ url_for('profile') }}" class="hover:text-emerald-300">Profile</a></li>
+      <li><a href="{{ url_for('logout') }}" class="hover:text-emerald-300">Logout</a></li>
+    </ul>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container mx-auto p-6">
+    {% block content %}{% endblock %}
+  </div>
+  
+  <!-- Chatbot Widget -->
+  <div class="chat-container" id="chat-container">
+    <div class="chat-header" onclick="toggleChat()">Skincare AI Chatbot</div>
+    <div class="chat-body" id="chat-box"></div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" placeholder="Ask a skincare question...">
+      <button onclick="sendMessage()">Send</button>
     </div>
-
-    <!-- Chatbot Widget -->
-    <div class="chat-container" id="chat-container">
-        <div class="chat-header" onclick="toggleChat()">Skincare AI Chatbot</div>
-        <div class="chat-body" id="chat-box"></div>
-        <div class="chat-footer">
-            <input type="text" id="chat-input" placeholder="Ask a skincare question...">
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </div>
-
-    <!-- Chatbot Toggle Button -->
-    <button onclick="toggleChat()" class="fixed bottom-10 right-10 bg-blue-600 p-3 rounded-full text-white text-xl">💬</button>
-
-    <!-- Footer -->
-    <footer class="bg-blue-900 text-center py-4">
-        <p>&copy; 2025 Skintellect. All rights reserved.</p>
-    </footer>
-
-    <script>
-        function toggleChat() {
-            let chatContainer = document.getElementById("chat-container");
-            chatContainer.style.display = chatContainer.style.display === "none" ? "block" : "none";
+  </div>
+  
+  <!-- Chatbot Toggle Button -->
+  <button onclick="toggleChat()" class="fixed bottom-10 right-10 bg-blue-600 p-3 rounded-full text-white text-xl">💬</button>
+  
+  <!-- Footer -->
+  <footer class="bg-blue-900 text-center py-4">
+    <p>&copy; 2025 Skintellect. All rights reserved.</p>
+  </footer>
+  
+  <script>
+    function toggleChat() {
+      var chatContainer = document.getElementById("chat-container");
+      if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
+        chatContainer.style.display = "block";
+      } else {
+        chatContainer.style.display = "none";
+      }
+    }
+  
+    async function sendMessage() {
+      var inputField = document.getElementById("chat-input");
+      var userMessage = inputField.value.trim();
+      if (!userMessage) return;
+  
+      var chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+      inputField.value = "";
+  
+      try {
+        let response = await fetch("/chatbot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userInput: userMessage }),
+        });
+        let data = await response.json();
+        if (data.error) {
+          chatBox.innerHTML += `<p class="text-red-500"><strong>Error:</strong> ${data.error}</p>`;
+        } else {
+          chatBox.innerHTML += `<p><strong>Bot:</strong> ${data.botReply}</p>`;
         }
-
-        async function sendMessage() {
-            let inputField = document.getElementById("chat-input");
-            let userMessage = inputField.value.trim();
-            if (!userMessage) return;
-
-            let chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
-            inputField.value = "";
-
-            try {
-                let response = await fetch("/chatbot", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userInput: userMessage }),
-                });
-
-                let data = await response.json();
-                chatBox.innerHTML += `<p><strong>Bot:</strong> ${data.botReply}</p>`;
-            } catch (error) {
-                chatBox.innerHTML += `<p class="text-red-500"><strong>Error:</strong> Could not get a response.</p>`;
-            }
-
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
-
+      } catch (error) {
+        chatBox.innerHTML += `<p class="text-red-500"><strong>Error:</strong> Could not get a response.</p>`;
+      }
+  
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+  
+  {% block scripts %}{% endblock %}
 </body>
 </html>
