@@ -14,6 +14,7 @@ from joblib import load
 df = pd.read_csv(r"dataset/updated_skincare_products.csv")
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = '4545'
 DATABASE = 'app.db'
 
@@ -336,4 +337,5 @@ def doctor():
 
 if __name__ == '__main__':
     init_app()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
