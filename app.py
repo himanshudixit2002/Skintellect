@@ -150,62 +150,75 @@ def predict():
         try:
             # Use a local set for unique classes per request
             unique_classes = set()
-            
+
+            # Retrieve and verify the uploaded image
+            image_file = request.files.get('image')
+            if not image_file:
+                return jsonify({"error": "No image uploaded."}), 400
+
+            # Ensure the static folder exists
+            static_folder = 'static'
+            if not os.path.exists(static_folder):
+                os.makedirs(static_folder)
+
             # Save the uploaded image with a unique filename
-            image_file = request.files['image']
             image_filename = str(uuid.uuid4()) + '.jpg'
-            image_path = os.path.join('static', image_filename)
+            image_path = os.path.join(static_folder, image_filename)
             image_file.save(image_path)
 
-            # Skin detection using Roboflow
-            skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
+            # ===== Skin Detection using Roboflow =====
+            skin_response = model_skin.predict(image_path, confidence=15, overlap=30)
+            skin_result = skin_response.json()
+            print("Skin detection result:", skin_result)
             skin_labels = [item["class"] for item in skin_result.get("predictions", [])]
-            for label in skin_labels:
-                unique_classes.add(label)
+            unique_classes.update(skin_labels)
 
-            # Oilyness detection using InferenceHTTPClient
+            # ===== Oilyness Detection using InferenceHTTPClient =====
             custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
             with CLIENT.use_configuration(custom_configuration):
                 oilyness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
-            
+            print("Oilyness detection result:", oilyness_result)
             if not oilyness_result.get('predictions'):
                 unique_classes.add("dryness")
             else:
                 oilyness_classes = [class_mapping.get(prediction['class'], prediction['class'])
                                     for prediction in oilyness_result['predictions']
-                                    if prediction['confidence'] >= 0.3]
-                for label in oilyness_classes:
-                    unique_classes.add(label)
+                                    if prediction.get('confidence', 0) >= 0.3]
+                unique_classes.update(oilyness_classes)
 
-            # Read image and annotate using supervision
+            # ===== Read Image and Annotate =====
             image = cv2.imread(image_path)
+            if image is None:
+                raise Exception("Error reading the saved image from disk.")
+
+            # Create detections from the Roboflow inference result
             detections = sv.Detections.from_inference(skin_result)
             label_annotator = sv.LabelAnnotator()
             bounding_box_annotator = sv.BoxAnnotator()
             annotated_image = bounding_box_annotator.annotate(scene=image, detections=detections)
             annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-            
-            # Get product recommendations based on detected classes
+
+            # ===== Get Product Recommendations =====
             recommended_products = recommend_products_based_on_classes(list(unique_classes))
             prediction_data = {
                 'classes': list(unique_classes),
                 'recommendations': recommended_products
             }
-            
-            # Save the annotated image (if needed for later use)
-            annotated_image_path = os.path.join('static', 'annotations_0.jpg')
+
+            # Save the annotated image (if needed later)
+            annotated_image_path = os.path.join(static_folder, 'annotations_0.jpg')
             cv2.imwrite(annotated_image_path, annotated_image)
-            
-            # Return prediction data as JSON
+
             return jsonify(prediction_data)
-        
+
         except Exception as e:
+            # Print the full exception details to the console for debugging.
             print("Error during prediction:", e)
             return jsonify({"error": "An error occurred while analyzing the image. Please try again."}), 500
 
     else:
-        # For GET requests you may choose to return an empty JSON or render a page.
         return jsonify({})
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
