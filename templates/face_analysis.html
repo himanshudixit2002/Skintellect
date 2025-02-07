@@ -1,103 +1,102 @@
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('uploadForm');
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const previewImage = document.getElementById('previewImage');
-        const loadingOverlay = document.querySelector('.loading-overlay');
-        const resultsSection = document.getElementById('resultsSection');
-    
-        // File Handling
-        function handleFiles(files) {
-            if (files.length) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                };
-                reader.readAsDataURL(files[0]);
-            }
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('uploadForm');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const loadingOverlay = document.querySelector('.loading-overlay');
+    const resultsSection = document.getElementById('resultsSection');
+
+    // File Handling
+    function handleFiles(files) {
+        if (files.length) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                document.getElementById('imagePreview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(files[0]);
         }
-    
-        // Drag & Drop Handling
-        if (window.matchMedia('(hover: hover)').matches) {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('bg-blue-100');
-            });
-    
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('bg-blue-100');
-            });
-    
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('bg-blue-100');
-                handleFiles(e.dataTransfer.files);
-            });
-        }
-    
-        // File Input Handling
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-    
-        // Form Submission
-        form.addEventListener('submit', async (e) => {
+    }
+
+    // Drag & Drop Handling
+    if (window.matchMedia('(hover: hover)').matches) {
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            loadingOverlay.style.display = 'flex';
-            resultsSection.classList.add('hidden');
-    
-            try {
-                const formData = new FormData();
-                if (!fileInput.files[0]) throw new Error('Please select an image');
-                
-                formData.append('image', fileInput.files[0]);
-                
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                });
-    
-                const data = await response.json();
-                
-                if (!data.success) throw new Error(data.error || 'Analysis failed');
-    
-                // Update Image Preview
-                previewImage.src = data.annotated_image;
-                
-                // Update Predictions
-                const predictionsList = document.getElementById('predictionsList');
-                predictionsList.innerHTML = data.classes
-                    .map(c => `<li class="p-3 bg-gray-50 rounded-lg mb-2">${c}</li>`)
-                    .join('');
-    
-                // Update Recommendations
-                const recommendationsGrid = document.getElementById('recommendationsGrid');
-                recommendationsGrid.innerHTML = data.recommendations
-                    .map(([condition, products]) => `
-                        <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-                            <h3 class="text-lg font-semibold mb-2">${condition}</h3>
-                            <div class="grid gap-4">
-                                ${products.map(p => `
-                                    <div class="border rounded-lg p-3">
-                                        <div class="font-medium">${p.Brand}</div>
-                                        <div class="text-sm text-gray-600">${p.Name}</div>
-                                        <div class="text-sm text-blue-600">$${p.Price}</div>
-                                        <div class="text-xs text-gray-500 mt-1">${p.Ingredients}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `).join('');
-    
-                resultsSection.classList.remove('hidden');
-    
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-                console.error('Analysis failed:', error);
-            } finally {
-                loadingOverlay.style.display = 'none';
-            }
+            dropZone.classList.add('bg-blue-100');
         });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-blue-100');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-blue-100');
+            handleFiles(e.dataTransfer.files);
+        });
+    }
+
+    // File Input Handling
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    // Form Submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loadingOverlay.style.display = 'flex';
+        resultsSection.classList.add('hidden');
+
+        try {
+            const formData = new FormData();
+            if (!fileInput.files[0]) throw new Error('Please select an image');
+            
+            formData.append('image', fileInput.files[0]);
+            
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (!data.success) throw new Error(data.error || 'Analysis failed');
+
+            // Update Image Preview
+            previewImage.src = data.annotated_image;
+            
+            // Update Predictions
+            const predictionsList = document.getElementById('predictionsList');
+            predictionsList.innerHTML = data.classes
+                .map(c => `<li class="p-3 bg-gray-50 rounded-lg mb-2">${c}</li>`)
+                .join('');
+
+            // Update Recommendations
+            const recommendationsGrid = document.getElementById('recommendationsGrid');
+            recommendationsGrid.innerHTML = data.recommendations
+                .map(([condition, products]) => `
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                        <h3 class="text-lg font-semibold mb-2">${condition}</h3>
+                        <div class="grid gap-4">
+                            ${products.map(p => `
+                                <div class="border rounded-lg p-3">
+                                    <div class="font-medium">${p.Brand}</div>
+                                    <div class="text-sm text-gray-600">${p.Name}</div>
+                                    <div class="text-sm text-blue-600">$${p.Price}</div>
+                                    <div class="text-xs text-gray-500 mt-1">${p.Ingredients}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+            resultsSection.classList.remove('hidden');
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            console.error('Analysis failed:', error);
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
     });
-    </script>
-    
+});
+</script>
