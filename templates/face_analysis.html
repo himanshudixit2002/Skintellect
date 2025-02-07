@@ -169,12 +169,12 @@
     <div id="resultsSection" class="hidden">
         <!-- Responsive results display -->
         <div class="predictions-container">
-            <h2 class="text-xl font-semibold mb-4">Analysis Results</h2>
-            <div id="predictionsList" class="space-y-3"></div>
+            <h2 class="text-xl font-semibold mb-4">Detected Skin Conditions</h2>
+            <ul id="predictionsList" class="list-group"></ul>
         </div>
 
         <div class="recommendations-container">
-            <h2 class="text-xl font-semibold mb-4">Recommendations</h2>
+            <h2 class="text-xl font-semibold mb-4">Product Recommendations</h2>
             <div id="recommendationsGrid" class="product-grid"></div>
         </div>
     </div>
@@ -191,7 +191,7 @@
         const form = document.getElementById('uploadForm');
         const loadingOverlay = document.querySelector('.loading-overlay');
 
-        // Cross-device file handling
+        // Function to handle file preview
         function handleFiles(files) {
             if (files.length) {
                 const reader = new FileReader();
@@ -203,7 +203,7 @@
             }
         }
 
-        // Desktop drag/drop support
+        // Desktop drag & drop support
         if (window.matchMedia('(hover: hover)').matches) {
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -218,19 +218,17 @@
                 e.preventDefault();
                 dropZone.classList.remove('bg-pink-50');
                 handleFiles(e.dataTransfer.files);
-                // Update the file input so the file is submitted
                 fileInput.files = e.dataTransfer.files;
             });
         }
 
-        // Universal file input handling
+        // File input change event
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        // Form submission
+        // Form submission event
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Ensure a file has been selected
             if (!fileInput.files || fileInput.files.length === 0) {
                 alert("Please select an image file to analyze.");
                 return;
@@ -263,70 +261,54 @@
         });
 
         function renderResults(data) {
-            // Clear previous results
+            // Render detected skin conditions from data.classes
             const predictionsList = document.getElementById('predictionsList');
             predictionsList.innerHTML = '';
-            const recommendationsGrid = document.getElementById('recommendationsGrid');
-            recommendationsGrid.innerHTML = '';
-
-            // Render predictions (assuming data.predictions is an array)
-            if (data.predictions && data.predictions.length > 0) {
-                data.predictions.forEach(prediction => {
-                    const predictionDiv = document.createElement('div');
-                    predictionDiv.className = 'prediction-item';
-
-                    // Create an accordion header for mobile view
-                    const header = document.createElement('div');
-                    header.className = 'condition-header flex justify-between items-center cursor-pointer';
-                    header.innerHTML = `<span>${prediction.condition} - Confidence: ${prediction.confidence}%</span>
-                                        <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                        </svg>`;
-                    
-                    const content = document.createElement('div');
-                    content.className = 'accordion-content mt-2 text-gray-700';
-                    content.textContent = prediction.details || 'No additional details available.';
-
-                    // Mobile-only accordion toggle
-                    header.addEventListener('click', () => {
-                        if (window.innerWidth < 768) {
-                            content.classList.toggle('active');
-                            header.querySelector('svg').classList.toggle('rotate-180');
-                        }
-                    });
-
-                    predictionDiv.appendChild(header);
-                    predictionDiv.appendChild(content);
-                    predictionsList.appendChild(predictionDiv);
+            if (data.classes && data.classes.length > 0) {
+                data.classes.forEach(condition => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = condition;
+                    predictionsList.appendChild(li);
                 });
             } else {
                 predictionsList.textContent = "No predictions available.";
             }
 
-            // Render recommendations (assuming data.recommendations is an array)
+            // Render product recommendations from data.recommendations
+            const recommendationsGrid = document.getElementById('recommendationsGrid');
+            recommendationsGrid.innerHTML = '';
             if (data.recommendations && data.recommendations.length > 0) {
-                data.recommendations.forEach(product => {
-                    const productCard = document.createElement('div');
-                    productCard.className = 'product-card border p-4 rounded-lg text-center';
-
-                    const img = document.createElement('img');
-                    img.src = product.image;
-                    img.alt = product.title;
-                    img.className = 'w-full h-auto mb-2';
-
-                    const title = document.createElement('h3');
-                    title.className = 'font-semibold mb-1';
-                    title.textContent = product.title;
-
-                    const desc = document.createElement('p');
-                    desc.className = 'text-sm text-gray-600';
-                    desc.textContent = product.description;
-
-                    productCard.appendChild(img);
-                    productCard.appendChild(title);
-                    productCard.appendChild(desc);
-
-                    recommendationsGrid.appendChild(productCard);
+                data.recommendations.forEach(rec => {
+                    // rec is expected to be an array: [skin_condition, productsList]
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'card-header';
+                    header.innerHTML = `<strong>${rec[0]}</strong>`;
+                    card.appendChild(header);
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body';
+                    
+                    if (rec[1] && rec[1].length > 0) {
+                        const ul = document.createElement('ul');
+                        ul.className = 'list-group list-group-flush';
+                        rec[1].forEach(product => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
+                                            Price: ${product.Price}<br>
+                                            Ingredients: ${product.Ingredients}`;
+                            ul.appendChild(li);
+                        });
+                        cardBody.appendChild(ul);
+                    } else {
+                        cardBody.innerHTML = "<p>No products available for this condition.</p>";
+                    }
+                    card.appendChild(cardBody);
+                    recommendationsGrid.appendChild(card);
                 });
             } else {
                 recommendationsGrid.textContent = "No recommendations available.";

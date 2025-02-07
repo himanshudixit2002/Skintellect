@@ -8,7 +8,7 @@ import uuid  # For generating unique filenames
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 import cv2
 import pandas as pd
-from joblib import load
+import traceback
 
 # Load skincare products dataset
 df = pd.read_csv(r"dataset/updated_skincare_products.csv")
@@ -144,9 +144,7 @@ def recommend_products_based_on_classes(classes):
             print(f"Warning: No column found for skin condition '{skin_condition}'")
     return recommendations
 
-import traceback  # For full stack trace printing
-
-@app.route('/predict', methods=['POST', 'GET'])
+@app.route('/predict', methods=['POST','GET'])
 def predict():
     if request.method == 'POST':
         try:
@@ -164,6 +162,8 @@ def predict():
             static_dir = 'static'
             if not os.path.exists(static_dir):
                 os.makedirs(static_dir)
+
+            # Generate a unique filename for the image
             image_filename = str(uuid.uuid4()) + '.jpg'
             image_path = os.path.join(static_dir, image_filename)
             image_file.save(image_path)
@@ -223,14 +223,12 @@ def predict():
 
             # Render the template with the prediction data
             return render_template('face_analysis.html', data=prediction_data)
-
         except Exception as e:
             print("Error during prediction:")
-            traceback.print_exc()  # This prints the full traceback to the console.
+            traceback.print_exc()
             return "An error occurred while analyzing the image. Please try again.", 500
     else:
         return render_template('face_analysis.html', data=[])
-
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -260,7 +258,6 @@ def login():
         if user and check_password_hash(user[2], password):
             session['username'] = username
             user_id = user[0]
-            # Redirect doctor users to the doctor's view
             if username == 'doctor1':
                 return redirect(url_for('allappoint'))
             survey_response = get_survey_response(user_id)
@@ -345,7 +342,6 @@ def appointment():
 @app.route("/allappointments")
 def allappoint():
     all_appointments = findallappointment()
-    # Pass the Python list directly so that we can use the tojson filter in the template.
     return render_template('doctor.html', appointments=all_appointments)
 
 @app.route("/userappointment")
