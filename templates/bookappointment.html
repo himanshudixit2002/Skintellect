@@ -1,78 +1,220 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+<style>
+    .consultation-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
 
-<div class="min-h-screen w-full relative flex flex-col items-center justify-center px-4 py-8 bg-gradient-to-br from-purple-50 to-blue-50">
-    <div class="max-w-screen-lg w-full bg-white rounded-2xl shadow-xl p-8 flex flex-col z-20 border border-blue-100/50">
-        <div class="mb-8 text-center space-y-2">
-            <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
-                Schedule Consultation
-            </h1>
-            <p class="text-gray-600">Expert dermatology care at your convenience</p>
-        </div>
+    .form-input-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        transition: color 0.3s ease;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
+
+    @media (max-width: 768px) {
+        .consultation-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
         
-        <form action="/appointment" method="POST" class="w-full space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="name" placeholder="Full Name"
-                        class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
-                </div>
-                
-                <div class="relative">
-                    <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" name="email" placeholder="Email Address"
-                        class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+        .form-input {
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+        }
+        
+        .form-icon {
+            left: 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="consultation-container">
+        <div class="max-w-3xl mx-auto space-y-8">
+            <div class="text-center space-y-4">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">
+                    Dermatology Consultation Booking
+                </h1>
+                <p class="text-gray-600 text-lg">
+                    Schedule your personalized skin health assessment
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="date" name="date"
-                        class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+            <form id="consultationForm" class="space-y-6" action="/appointment" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Name Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-user"></i>
+                        <input type="text" name="name" required
+                            class="form-input"
+                            placeholder="Full Name"
+                            aria-label="Full Name">
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-envelope"></i>
+                        <input type="email" name="email" required
+                            class="form-input"
+                            placeholder="Email Address"
+                            aria-label="Email Address">
+                    </div>
+
+                    <!-- Date Picker -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-calendar-day"></i>
+                        <input type="date" name="date" required
+                            class="form-input"
+                            aria-label="Appointment Date">
+                    </div>
+
+                    <!-- Skin Type Select -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-skin"></i>
+                        <select name="skin" required
+                            class="form-input form-select"
+                            aria-label="Skin Type">
+                            <option value="">Skin Type</option>
+                            <option>Normal</option>
+                            <option>Dry</option>
+                            <option>Oily</option>
+                            <option>Combination</option>
+                            <option>Sensitive</option>
+                        </select>
+                    </div>
+
+                    <!-- Phone Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-phone"></i>
+                        <input type="tel" name="phone" required
+                            class="form-input"
+                            placeholder="Phone Number"
+                            aria-label="Phone Number">
+                    </div>
+
+                    <!-- Age Input -->
+                    <div class="form-input-group">
+                        <i class="form-icon fas fa-birthday-cake"></i>
+                        <input type="number" name="age" min="13" required
+                            class="form-input"
+                            placeholder="Age"
+                            aria-label="Age">
+                    </div>
                 </div>
 
-                <div class="relative">
-                    <i class="fas fa-skin absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <select name="skin" class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all appearance-none">
-                        <option value="">Select Skin Type</option>
-                        <option>Normal</option>
-                        <option>Dry</option>
-                        <option>Oily</option>
-                        <option>Combination</option>
-                        <option>Sensitive</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <i class="fas fa-phone absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="tel" name="phone" placeholder="Phone Number"
-                        class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+                <!-- Consultation Reason -->
+                <div class="form-input-group">
+                    <i class="form-icon fas fa-comment-dots top-4"></i>
+                    <textarea name="reason" rows="4" required
+                        class="form-input pt-3"
+                        placeholder="Consultation Reason"
+                        aria-label="Consultation Reason"></textarea>
                 </div>
 
-                <div class="relative">
-                    <i class="fas fa-birthday-cake absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="number" name="age" placeholder="Age" min="13"
-                        class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
-                </div>
-            </div>
-
-            <div class="relative">
-                <i class="fas fa-comment-dots absolute left-3 top-4 text-gray-400"></i>
-                <textarea name="address" placeholder="Consultation Reason" rows="4"
-                    class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"></textarea>
-            </div>
-
-            <div class="mt-8 flex flex-col items-center space-y-4">
-                <button class="w-full md:w-64 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">
-                    Schedule Now
+                <!-- Submit Button -->
+                <button type="submit" 
+                    class="w-full py-3 px-6 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    aria-label="Schedule Consultation">
+                    Schedule Appointment
                     <i class="fas fa-arrow-right ml-2"></i>
                 </button>
-            </div>
-        </form>
+            </form>
         </div>
-    </div>    
-</div>  
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('consultationForm');
+    const inputs = form.querySelectorAll('.form-input');
+    
+    // Add real-time validation
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.checkValidity()) {
+                input.classList.remove('border-red-500');
+                input.classList.add('border-green-500');
+            } else {
+                input.classList.remove('border-green-500');
+            }
+        });
+    });
+
+    // Form submission handling
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                Scheduling...
+            `;
+
+            // Simulated API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Show success feedback
+            submitBtn.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                Scheduled Successfully
+            `;
+            form.reset();
+            
+        } catch (error) {
+            submitBtn.innerHTML = `
+                <i class="fas fa-times-circle"></i>
+                Scheduling Failed
+            `;
+        } finally {
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    Schedule Appointment
+                    <i class="fas fa-arrow-right ml-2"></i>
+                `;
+            }, 2000);
+        }
+    });
+});
+</script>
 {% endblock %}
