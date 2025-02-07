@@ -1,5 +1,4 @@
 flask
-sqlite3
 pandas
 numpy
 opencv-python
@@ -8,3 +7,4 @@ werkzeug
 roboflow
 supervision
 inference-sdk
+sqlite3
