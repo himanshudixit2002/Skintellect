@@ -1,110 +1,63 @@
 {% extends "layout.html" %}
-{% block title %}Skintellect{% endblock %}
+{% block title %}Skintellect - AI-Powered Skin Analysis{% endblock %}
 {% block content %}
-<div class="min-h-screen">
-  <!-- Hero Section -->
-  <div class="relative bg-gradient-to-r from-purple-800 to-blue-900 text-white py-20">
-    <div class="container mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-6xl font-bold mb-6">Smart Skin Analysis</h1>
-      <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
-        Get personalized skincare recommendations using AI-powered analysis
-    <div class="h-96 p-4 flex flex-col">
-      <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-2">
-        <div class="bg-blue-50 p-3 rounded-lg">
-          <p class="text-sm">Hello! I'm your skin health assistant. Ask me about skincare routines, product recommendations, or any skin concerns.</p>
-        </div>
+
+<!-- HERO SECTION -->
+<section class="relative min-h-screen flex flex-col justify-center items-center text-center bg-gradient-to-br from-indigo-900 via-blue-800 to-purple-900 overflow-hidden">
+  <!-- Background Image -->
+  <div class="absolute inset-0">
+    <img src="/static/assets/1.png" alt="Skincare AI Analysis" class="w-full h-full object-cover opacity-50">
+  </div>
+  
+  <!-- Hero Content -->
+  <div class="relative z-10 max-w-4xl px-6">
+    <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight animate-fade-in">
+      AI-Powered Skincare Analysis
+    </h1>
+    <p class="text-lg md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto animate-fade-in">
+      Scan your face and let our AI recommend the best skincare routine tailored to your skin type.
+    </p>
+    <a href="{{ url_for('predict') }}" 
+       class="bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-white font-semibold py-3 px-12 rounded-full shadow-xl transition transform hover:scale-110 animate-bounce">
+      Analyse Face
+    </a>
+  </div>
+
+  <!-- Floating Elements -->
+  <div class="absolute top-10 left-10 w-24 h-24 bg-emerald-400/20 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-20 right-16 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
+</section>
+
+<!-- WHY CHOOSE US SECTION -->
+<section class="bg-gradient-to-r from-blue-900 to-purple-900 py-20 px-6">
+  <div class="container mx-auto text-center">
+    <h2 class="text-4xl md:text-5xl font-bold text-white mb-10">
+      Why Choose Skintellect?
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+      <!-- Benefit 1 -->
+      <div class="bg-white/10 backdrop-blur-lg shadow-lg rounded-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition">
+        <h3 class="text-xl font-semibold text-white">AI-Powered Precision</h3>
+        <p class="text-gray-200 mt-2">
+          Advanced AI detects skin conditions with industry-leading accuracy.
+        </p>
       </div>
-      <div class="border-t pt-4">
-        <div class="flex space-x-2">
-          <input type="text" id="chat-input" placeholder="Type your message..." 
-                 class="flex-1 border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          <button id="send-btn" class="bg-emerald-400 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 text-sm">
-            Send
-          </button>
-        </div>
+      <!-- Benefit 2 -->
+      <div class="bg-white/10 backdrop-blur-lg shadow-lg rounded-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition">
+        <h3 class="text-xl font-semibold text-white">Personalized Routine</h3>
+        <p class="text-gray-200 mt-2">
+          Get product recommendations tailored to your unique skin type.
+        </p>
+      </div>
+      <!-- Benefit 3 -->
+      <div class="bg-white/10 backdrop-blur-lg shadow-lg rounded-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition">
+        <h3 class="text-xl font-semibold text-white">Fast & Easy</h3>
+        <p class="text-gray-200 mt-2">
+          Upload your image, analyze your skin, and get results in seconds.
+        </p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Rest of your index.html content -->
-  <div class="flex-grow relative overflow-hidden">
-    <!-- ... existing hero section ... -->
-  </div>
-  
-  <div class="bg-blue-900/50 py-16">
-    <!-- ... existing features grid ... -->
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const chatContainer = document.getElementById('chat-container');
-  const chatMessages = document.getElementById('chat-messages');
-  const userInput = document.getElementById('user-input');
-  const sendBtn = document.getElementById('send-btn');
-  const closeBtn = document.getElementById('close-chat');
-
-  async function sendMessage() {
-    const message = userInput.value.trim();
-    if (!message) return;
-
-    // Add user message to chat window
-    chatMessages.innerHTML += `
-      <div class="flex justify-end">
-        <div class="bg-emerald-100 p-3 rounded-lg max-w-xs">
-          <p class="text-sm">${message}</p>
-        </div>
-      </div>
-    `;
-    
-    // Clear the input and scroll to bottom
-    userInput.value = '';
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    try {
-      const response = await fetch('/chatbot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userInput: message })
-      });
-      const data = await response.json();
-      // Add bot reply to chat window
-      chatMessages.innerHTML += `
-        <div class="flex justify-start">
-          <div class="bg-gray-100 p-3 rounded-lg max-w-xs">
-            <p class="text-sm">${data.botReply || "I'm sorry, I didn't understand that."}</p>
-          </div>
-        </div>
-      `;
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    } catch (error) {
-      chatMessages.innerHTML += `
-        <div class="flex justify-start">
-          <div class="bg-red-100 p-3 rounded-lg max-w-xs">
-            <p class="text-sm">Error: Could not send message</p>
-          </div>
-        </div>
-      `;
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      console.error(error);
-    }
-  }
-
-  // Event listener for send button click
-  sendBtn.addEventListener('click', sendMessage);
-
-  // Allow sending message with the Enter key
-  userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      sendMessage();
-    }
-  });
-
-  // Event listener for close button to hide chat widget
-  closeBtn.addEventListener('click', () => {
-    chatContainer.classList.add('hidden');
-  });
-});
-</script>
 {% endblock %}
