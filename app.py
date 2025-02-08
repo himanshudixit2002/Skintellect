@@ -42,7 +42,8 @@ def create_tables():
         cursor.execute('''CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            is_doctor BOOLEAN DEFAULT FALSE
         )''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS survey_responses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,20 +122,12 @@ def insert_appointment_data(name, email, date, skin, phone, age, address, status
         conn.commit()
         return cursor.lastrowid  # Return the ID of the newly created appointment
 
-def findappointment(username):
+def find_appointments(username):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         appointments = cursor.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
-        return [dict(appointment) for appointment in appointments]
+        return [dict(row) for row in appointments]
 
-def findappointment(username):
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        appointments = cursor.execute(
-            "SELECT * FROM appointment WHERE username = ?", (username,)
-        ).fetchall()
-
-        return [dict(row) for row in appointments]  # Convert Rows to Dicts
 
 
 def update_appointment_status(appointment_id):
@@ -144,7 +137,7 @@ def update_appointment_status(appointment_id):
 
 def delete_appointment(appointment_id):
     with get_db_connection() as conn:
-        conn.execute("DELETE FROM appointment WHERE id = ?", (appointment_id,))
+        conn.execute("DELETE FROM appointment WHERE id = ?", (int(appointment_id,)))
         conn.commit()
 
 
@@ -461,19 +454,31 @@ def appointment():
 
 
 
-@app.route("/allappointments")
-def allappointments():
-    appointments = findallappointment()
-    return render_template("doctor.html", appointments=appointments)
-
-@app.route("/userappointment")
+@app.route("/userappointment", methods=["GET"])
 def userappoint():
     if "username" not in session:
         return redirect(url_for("login"))
-
     username = session.get("username")
-    appointments = findappointment(username)
+    appointments = find_appointments(username)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"all_appointments": appointments})
     return render_template("userappointment.html", all_appointments=appointments)
+
+
+
+@app.route("/delete_user_request", methods=["POST"])
+def delete_user_request():
+    data = request.get_json()
+    try:
+        appointment_id = int(data.get("id"))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid appointment ID"}), 400
+
+    delete_appointment(appointment_id)
+    return jsonify({"message": "deleted successfully"})
+
+
+
 
 
 @app.route("/face_analysis", methods=["POST"])
@@ -482,11 +487,6 @@ def face_analysis():
     update_appointment_status(appointment_id)
     return jsonify({"message": "updated"})
 
-@app.route("/delete_user_request", methods=["POST"])
-def delete_user_request():
-    appointment_id = request.form.get("id")
-    delete_appointment(appointment_id)
-    return jsonify({"message": "deleted successfully"})
 
 # ---------------------------
 # AI Skin Analysis & Product Recommendation

@@ -1,45 +1,44 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="h-screen w-full flex flex-col items-center justify-center bg-gray-100 px-4 sm:px-8">
-    
-    <!-- Header -->
-    <div class="w-full max-w-3xl flex flex-col items-center text-center">
-        <h1 class="text-black text-4xl sm:text-5xl md:text-6xl font-serif flex items-center gap-3">
-            <i class="fa-solid fa-calendar-check text-blue-600"></i> 
-            <span>Doctor's Appointments</span>
+<div class="min-h-screen w-full flex flex-col items-center justify-center bg-gray-100 px-4">
+    <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold text-center text-blue-600 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-calendar-check text-blue-500"></i> My Appointments
         </h1>
-        <p class="text-gray-500 mt-2 text-sm sm:text-base">Manage your booked appointments</p>
-    </div>
-
-    <!-- Appointment List -->
-    <div id="appointmentsContainer" class="mt-6 w-full max-w-3xl bg-white bg-opacity-95 p-5 rounded-xl shadow-lg shadow-gray-500 overflow-y-auto max-h-[70vh] flex flex-col gap-3">
-        <p id="noAppointmentsMsg" class="text-center text-gray-500 text-lg hidden">No appointments found.</p>
+        <div id="appointmentsContainer" class="mt-6 space-y-4">
+            <p id="noAppointmentsMsg" class="text-center text-gray-500 text-xl hidden">No appointments found.</p>
+        </div>
     </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    let appointments = [];
-
-    // Fetch appointments from the server
-    function fetchAppointments() {
-        fetch("/userappointment")
-            .then(response => response.json())
-            .then(data => {
-                appointments = data.all_appointments || [];
-                renderAppointments();
-            })
-            .catch(error => console.error("Error fetching appointments:", error));
-    }
-
     const container = document.getElementById("appointmentsContainer");
     const noAppointmentsMsg = document.getElementById("noAppointmentsMsg");
 
-    function renderAppointments() {
+    // Fetch appointments from the server via AJAX
+    async function fetchAppointments() {
+        try {
+            const response = await fetch("/userappointment", { 
+                headers: { "X-Requested-With": "XMLHttpRequest" } 
+            });
+            const data = await response.json();
+            if (data.error) {
+                console.error("Error:", data.error);
+                return;
+            }
+            renderAppointments(data.all_appointments);
+        } catch (error) {
+            console.error("Error fetching appointments:", error);
+        }
+    }
+
+    // Render appointments in the UI
+    function renderAppointments(appointments) {
         container.innerHTML = ""; // Clear previous items
 
-        if (appointments.length === 0) {
+        if (!appointments || appointments.length === 0) {
             noAppointmentsMsg.classList.remove("hidden");
             return;
         } else {
@@ -48,63 +47,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
         appointments.forEach((appointment) => {
             const appointmentDiv = document.createElement("div");
+            appointmentDiv.setAttribute("id", `appointment-${appointment.id}`);
             appointmentDiv.classList.add(
-                "h-auto", "w-full", "bg-gray-100", "p-4", "rounded-lg", "border",
-                "border-gray-300", "shadow-md", "hover:bg-blue-50", "transition-all",
-                "flex", "flex-col", "gap-2", "relative"
+                "p-4", "bg-gray-100", "rounded-lg", "shadow-md", "flex", 
+                "justify-between", "items-center", "transition-all", "duration-300"
             );
 
-            const status = parseInt(appointment.status) === 0 ? "Pending" : "Accepted";
+            // Ensure appointment.status is parsed correctly
+            const statusVal = parseInt(appointment.status);
+            const status = statusVal === 0 ? "Pending" : "Accepted";
             const statusColor = status === "Pending" ? "text-red-500" : "text-green-500";
 
             appointmentDiv.innerHTML = `
-                <div class="flex flex-col sm:flex-row sm:justify-between">
-                    <div>
-                        <p class="text-lg"><strong>Name:</strong> ${appointment.name}</p>
-                        <p class="text-lg"><strong>Email:</strong> ${appointment.email}</p>
-                        <p class="text-lg"><strong>Date:</strong> ${appointment.date}</p>
-                        <p class="text-lg"><strong>Skin Type:</strong> ${appointment.skin}</p>
-                        <p class="text-lg"><strong>Status:</strong> <span class="${statusColor} font-bold">${status}</span></p>
-                    </div>
-                    <!-- Delete Button -->
-                    <button class="sm:self-center mt-2 sm:mt-0 bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-all text-sm"
-                        onclick="handleDelete(${appointment.id}, this)">Delete</button>
+                <div>
+                    <p class="text-lg"><strong>Name:</strong> ${appointment.name}</p>
+                    <p class="text-lg"><strong>Date:</strong> ${appointment.date}</p>
+                    <p class="text-lg"><strong>Status:</strong> <span class="${statusColor} font-bold">${status}</span></p>
                 </div>
+                <button onclick="deleteAppointment(${appointment.id})" 
+                    class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-all">
+                    Delete
+                </button>
             `;
 
             container.appendChild(appointmentDiv);
         });
     }
-    
-    function handleDelete(appointmentId, buttonElement) {
-        if (!confirm("Are you sure you want to delete this appointment?")) return;
 
-        fetch("/delete_user_request", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: appointmentId }) 
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message === "Appointment deleted successfully") {
-                console.log("Deleted successfully:", data);
-                // Remove from UI with fade-out animation
-                buttonElement.closest("div").classList.add("opacity-0", "transition-opacity", "duration-500");
-                setTimeout(() => {
-                    buttonElement.closest("div").remove();
-                    checkNoAppointments();
-                }, 500);
+    // Delete a specific appointment
+    async function deleteAppointment(id) {
+        if (!confirm("Are you sure you want to delete this appointment?")) return;
+        try {
+            const response = await fetch("/delete_user_request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id })
+            });
+            const data = await response.json();
+            console.log("Delete response:", data);
+            if (data.message === "deleted successfully") {
+                // Remove only the specific appointment element using its unique ID
+                const appointmentDiv = document.getElementById(`appointment-${id}`);
+                if (appointmentDiv) {
+                    appointmentDiv.classList.add("opacity-0", "transition-opacity", "duration-500");
+                    setTimeout(() => {
+                        appointmentDiv.remove();
+                        checkNoAppointments();
+                    }, 500);
+                }
             } else {
                 console.error("Error deleting appointment:", data.error);
             }
-        })
-        .catch(error => console.error("Error deleting appointment:", error));
+        } catch (error) {
+            console.error("Error deleting appointment:", error);
+        }
     }
 
-    // Function to show "No Appointments" message when empty
+    // Function to show "No Appointments" message if container is empty
     function checkNoAppointments() {
-        if (document.querySelectorAll("#appointmentsContainer div").length === 0) {
-            document.getElementById("noAppointmentsMsg").classList.remove("hidden");
+        if (container.children.length === 0) {
+            noAppointmentsMsg.classList.remove("hidden");
         }
     }
 

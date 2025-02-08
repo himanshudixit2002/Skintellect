@@ -86,21 +86,21 @@
                 </div>
 
                 <div class="border-t p-4">
-                    <form id="chatForm" class="flex gap-2">
+                    <form id="chatForm" class="flex gap-2 items-center sm:flex-row flex-col">
                         <input type="text"
                             id="userInput"
-                            class="flex-1 border rounded-full py-3 px-6 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="flex-1 border rounded-full py-3 px-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                             placeholder="Type your message..."
                             autocomplete="off"
                             aria-label="Chat input">
+                
                         <button type="submit"
-                            class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 transition-colors"
+                            class="bg-indigo-600 text-white rounded-full p-3 sm:p-4 hover:bg-indigo-700 transition-colors flex items-center justify-center w-full sm:w-auto"
                             aria-label="Send message">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </form>
                 </div>
-            </div>
 
             <script>
             document.addEventListener('DOMContentLoaded', () => {
