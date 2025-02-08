@@ -245,47 +245,93 @@ def chatbot():
         return jsonify({"error": "Error processing request."}), 500
 
 
+import requests
+from langchain import PromptTemplate
+
 def generate_skincare_routine(user_details):
     """
-    Calls Google Gemini API to generate a skincare routine based on user details.
+    Uses LangChain to generate a detailed, structured skincare routine by calling Google Gemini API.
+    Ensures correct formatting with 10 structured steps for morning and night routines.
     """
-    prompt = f"""
-    Based on the following user skin details, generate a personalized skincare routine:
+    # Define a structured prompt
+    prompt_template = """
+    Based on the following user skin details, generate a **concise, structured, and formatted** skincare routine:
+
+    - **Age:** {age}
+    - **Gender:** {gender}
+    - **Skin Type:** {skin_type}
+    - **Main Concerns:** {concerns}
+    - **Acne Frequency:** {acne_frequency}
+    - **Current Skincare Routine:** {skincare_routine}
+    - **Stress Level:** {stress_level}
+
+    **Output Format (Strictly follow this format!):**
     
-    Age: {user_details['age']}
-    Gender: {user_details['gender']}
-    Skin Type: {user_details['skin_type']}
-    Main Concerns: {user_details['concerns']}
-    Acne Frequency: {user_details['acne_frequency']}
-    Skincare Routine: {user_details['skincare_routine']}
-    Stress Level: {user_details['stress_level']}
+    🌞 **Morning Routine**  
+    1. Step 1  
+    2. Step 2  
+    3. Step 3  
+    4. Step 4  
+    5. Step 5  
+    6. Step 6  
+    7. Step 7  
 
-    Generate:
-    1. A morning skincare routine with 4-5 steps.
-    2. A night skincare routine with 4-5 steps.
+    🌙 **Night Routine**  
+    1. Step 1  
+    2. Step 2  
+    3. Step 3  
+    4. Step 4  
+    5. Step 5  
+    6. Step 6  
+    7. Step 7   
 
-    Keep the recommendations easy to follow and product-neutral.
+    Ensure that:
+    - **Each step is numbered properly**.
+    - **Use bold headings** without unnecessary asterisks (`**`).
+    - **Provide exactly 10 steps per routine**.
+    - **Each step should be actionable and easy to follow**.
     """
 
-    headers = {
-        "Content-Type": "application/json",
-    }
+    # Format the prompt with user details
+    prompt = PromptTemplate(
+        input_variables=["age", "gender", "skin_type", "concerns", "acne_frequency", "skincare_routine", "stress_level"],
+        template=prompt_template
+    ).format(
+        age=user_details["age"],
+        gender=user_details["gender"],
+        skin_type=user_details["skin_type"],
+        concerns=user_details["concerns"],
+        acne_frequency=user_details["acne_frequency"],
+        skincare_routine=user_details["skincare_routine"],
+        stress_level=user_details["stress_level"]
+    )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINIE_API_KEY}"
+    # Function to call the Gemini API
+    def call_gemini_api(prompt_text):
+        headers = {"Content-Type": "application/json"}
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINIE_API_KEY}"
+        response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt_text}]}]})
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        else:
+            return "Failed to fetch routine from AI"
 
-    response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+    # Call Gemini API
+    bot_reply = call_gemini_api(prompt)
 
-    if response.status_code == 200:
-        data = response.json()
-        bot_reply = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-
+    # Split morning and night routines correctly
+    if "🌙" in bot_reply:
+        parts = bot_reply.split("🌙")
+        morning_routine = parts[0].strip()
+        night_routine = "🌙" + parts[1].strip()
+    else:
         routines = bot_reply.split("\n\n")
-        morning_routine = routines[0] if len(routines) > 0 else "No routine found"
-        night_routine = routines[1] if len(routines) > 1 else "No routine found"
+        morning_routine = routines[0].strip() if routines else "No routine found"
+        night_routine = routines[1].strip() if len(routines) > 1 else "No routine found"
 
-        return {"morning_routine": morning_routine, "night_routine": night_routine}
-    
-    return {"error": "Failed to fetch routine from AI"}
+    return {"morning_routine": morning_routine, "night_routine": night_routine}
+
 
 def save_skincare_routine(user_id, morning_routine, night_routine):
     with get_db_connection() as conn:
