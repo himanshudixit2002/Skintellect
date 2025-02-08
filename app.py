@@ -136,45 +136,44 @@ create_tables()
 # ---------------------------
 # Chatbot Endpoint
 # ---------------------------
+# Route to handle chatbot requests
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
-    # Get JSON payload from the request
     data = request.get_json()
     user_input = data.get("userInput")
+
     if not user_input:
         return jsonify({"error": "No user input provided."}), 400
 
-    # Retrieve Gemini API key from environment variables
-    geminie_api_key = os.environ.get("GEMINIE_API_KEY")
-    if not geminie_api_key:
+    gemini_api_key = os.environ.get("GEMINIE_API_KEY")
+    if not gemini_api_key:
         return jsonify({"error": "Gemini API key not configured."}), 500
 
-    # Construct payload for Gemini API (adjust parameters per Gemini's documentation)
+    # Construct the payload in Gemini's format
     payload = {
-        "prompt": user_input,
-        # Add any additional parameters that Gemini might require
+        "contents": [{
+            "parts": [{"text": user_input}]
+        }]
     }
 
-    # Set up the Gemini endpoint.
-    # Here we assume that the API key is provided as a query parameter. Adjust if needed.
-    endpoint = f"https://geminie.googleapis.com/v1/chat:query?key={geminie_api_key}"
+    # Correct Gemini API endpoint
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
 
     headers = {
         "Content-Type": "application/json"
-        # If Gemini expects the key in a Bearer token, use:
-        # "Authorization": f"Bearer {geminie_api_key}"
     }
 
     try:
-        # Make the API request
         response = requests.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an error for bad status codes
+        response.raise_for_status()
         response_json = response.json()
 
-        # Assume that Gemini returns the chatbot reply in a key called "reply"
-        bot_reply = response_json.get("reply", "I'm sorry, I didn't understand that.")
+        # Extract the chatbot's response from the API response
+        bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "I'm sorry, I didn't understand that.")
+
         return jsonify({"botReply": bot_reply})
-    except Exception as e:
+    
+    except requests.exceptions.RequestException as e:
         print("Gemini API error:", e)
         return jsonify({"error": "Error processing request."}), 500
 
