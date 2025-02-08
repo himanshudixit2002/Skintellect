@@ -1,36 +1,42 @@
 {% extends "layout.html" %}
 {% block title %}SKINTELLECT | Profile{% endblock %}
 {% block content %}
+
 <div class="min-h-screen w-screen flex items-center justify-center relative px-4 py-16 bg-gray-50">
-  <!-- Optional background image can be enabled if needed -->
-  <!-- <img src="{{ url_for('static', filename='assets/bg5.webp') }}" alt="" class="absolute top-0 left-0 w-full h-full object-cover brightness-90 z-0"> -->
   <div class="max-w-screen-md w-full md:w-1/2 bg-white bg-opacity-90 rounded-2xl p-8 shadow-lg backdrop-blur-md z-10 mt-16">
+    
+    <!-- Profile Header -->
     <div class="flex items-center justify-center mb-8 gap-4 flex-wrap">
       <img src="{{ url_for('static', filename='assets/user.png') }}" alt="Profile Image" class="w-14 h-14 rounded-full shadow-md">
-      <p class="text-3xl md:text-4xl font-bold text-center text-gray-900">{{ name }}</p>
+      <p class="text-3xl md:text-4xl font-bold text-center text-gray-900">{{ survey.name }}</p>
     </div>
+
+    <!-- User Info -->
     <div class="text-gray-800 flex flex-col gap-4">
-      {% for label, value, bg_color in [
-        ("Name:", name, "bg-blue-100"),
-        ("Age:", age, "bg-blue-200"),
-        ("Gender:", gender, "bg-blue-100"),
-        ("Concerns:", concerns, "bg-blue-200"),
-        ("How Often Does Your Acne Appear?", acne_frequency, "bg-blue-100"),
-        ("How Many Comedones Do You Have?", comedones_count, "bg-blue-200"),
-        ("First Concern You'd Like To Address:", first_concern, "bg-blue-100"),
-        ("Cosmetic Usage Frequency:", cosmetics_usage, "bg-blue-200"),
-        ("Reaction to Skincare Products:", skin_reaction, "bg-blue-100"),
-        ("Skin Type Description:", skin_type_details, "bg-blue-200"),
-        ("Medications That May Interact:", medications, "bg-blue-100"),
-        ("Current Skincare Routine:", skincare_routine, "bg-blue-200"),
-        ("Stress Level (0-5):", stress_level, "bg-blue-100")
+      {% set fields = [
+        ("Name", survey.name, "bg-blue-100"),
+        ("Age", survey.age, "bg-blue-200"),
+        ("Gender", survey.gender, "bg-blue-100"),
+        ("Concerns", survey.concerns, "bg-blue-200"),
+        ("How Often Does Your Acne Appear?", survey.acne_frequency, "bg-blue-100"),
+        ("How Many Comedones Do You Have?", survey.comedones_count, "bg-blue-200"),
+        ("First Concern You'd Like To Address", survey.first_concern, "bg-blue-100"),
+        ("Cosmetic Usage Frequency", survey.cosmetic_usage, "bg-blue-200"),
+        ("Reaction to Skincare Products", survey.skin_reaction, "bg-blue-100"),
+        ("Skin Type Description", survey.skin_type, "bg-blue-200"),
+        ("Medications That May Interact", survey.medications, "bg-blue-100"),
+        ("Current Skincare Routine", survey.skincare_routine, "bg-blue-200"),
+        ("Stress Level (0-5)", survey.stress_level, "bg-blue-100")
       ] %}
+
+      {% for label, value, bg_color in fields %}
         <div class="px-6 py-3 flex flex-col md:flex-row justify-between items-center rounded-lg {{ bg_color }} shadow-sm hover:bg-blue-50 transition-colors duration-200">
-          <label class="font-semibold text-base md:text-lg text-gray-900">{{ label }}</label>
+          <label class="font-semibold text-base md:text-lg text-gray-900">{{ label }}:</label>
           <span class="text-base md:text-lg text-gray-700 text-right">{{ value if value else "N/A" }}</span>
         </div>
       {% endfor %}
     </div>
   </div>
 </div>
+
 {% endblock %}

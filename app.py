@@ -103,17 +103,20 @@ def get_survey_response(user_id):
 
 def insert_appointment_data(name, email, date, skin, phone, age, address, status, username):
     with get_db_connection() as conn:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             '''INSERT INTO appointment (name, email, date, skin, phone, age, address, status, username)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (name, email, date, skin, phone, age, address, status, username)
         )
         conn.commit()
+        return cursor.lastrowid  # Return the ID of the newly created appointment
 
 def findappointment(username):
     with get_db_connection() as conn:
-        appointments = conn.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
-    return appointments
+        cursor = conn.cursor()
+        appointments = cursor.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
+        return [dict(appointment) for appointment in appointments]
 
 def findallappointment():
     with get_db_connection() as conn:
@@ -159,21 +162,66 @@ def chatbot():
     headers = {"Content-Type": "application/json"}
 
     try:
+        # First handle appointment booking logic if triggered
+        if "make an appointment" in user_input.lower() or "schedule consultation" in user_input.lower():
+            # Get user details from database
+            user = get_user(session.get("username"))
+            survey_data = get_survey_response(user["id"]) if user else None
+            
+            if not user or not survey_data:
+                return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
+
+            # Extract appointment details from user input using Gemini
+            payload["contents"][0]["parts"][0]["text"] = f"""
+            Extract appointment details from this request: {user_input}
+            Required format:
+            Date: [requested date/time]
+            Reason: [short reason]
+            Preferred contact method: [phone/email]
+            """
+            
+            # Get structured response from Gemini
+            response = requests.post(endpoint, headers=headers, json=payload)
+            response.raise_for_status()
+            extraction = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            
+            # Create appointment record
+            appointment_id = insert_appointment_data(
+                name=survey_data["name"],
+                email=user["username"],  # Using username as email for simplicity
+                date=extraction.split("Date: ")[1].split("\n")[0] if "Date: " in extraction else "ASAP",
+                skin=survey_data["skin_type"],
+                phone=survey_data.get("phone", ""),
+                age=survey_data["age"],
+                address=extraction.split("Reason: ")[1].split("\n")[0] if "Reason: " in extraction else "General Consultation",
+                status=False,
+                username=user["username"]
+            )
+            
+            return jsonify({
+                "botReply": f"Appointment scheduled! Your reference ID: APPT-{appointment_id}",
+                "type": "appointment_confirmation",
+                "appointmentId": appointment_id
+            })
+
+        # Default Gemini response handling
         response = requests.post(endpoint, headers=headers, json=payload)
         response.raise_for_status()
         response_json = response.json()
 
-        # Print API response for debugging
-        print("Full Gemini API Response:", response_json)
-
-        # Adjust this based on the actual response structure
         bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-
-        # If response is empty, return a default message
+        
+        # Enhanced empty response handling
         if not bot_reply:
-            bot_reply = "I'm sorry, but I couldn't generate a response. Try asking differently."
+            return jsonify({
+                "botReply": "I'm having trouble understanding. Could you rephrase that?",
+                "type": "clarification_request"
+            })
 
-        return jsonify({"botReply": bot_reply})
+        return jsonify({
+            "botReply": bot_reply,
+            "type": "general_response"
+        })
 
     except requests.exceptions.RequestException as e:
         print("Gemini API error:", e)
@@ -274,21 +322,22 @@ def bookappointment():
 
 @app.route("/appointment", methods=["POST"])
 def appointment():
-    # Retrieve fields from the form.
+    if "username" not in session:
+        return redirect(url_for("login"))
+
     name = request.form.get("name")
     email = request.form.get("email")
     date = request.form.get("date")
     skin = request.form.get("skin")
     phone = request.form.get("phone")
     age = request.form.get("age")
-    # Use the "reason" field (since that's what your consultation form sends)
-    address = request.form.get("reason")  # Alternatively, rename the form field to "address"
-    username = session.get("username")
+    address = request.form.get("reason")
+    username = session["username"]
     status = False
+
     insert_appointment_data(name, email, date, skin, phone, age, address, status, username)
-    
-    # Redirect to the user appointments page so the user can see their appointment
     return redirect(url_for("userappoint"))
+
 
 
 @app.route("/allappointments")
