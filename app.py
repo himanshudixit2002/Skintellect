@@ -74,7 +74,16 @@ def create_tables():
             status BOOLEAN,
             username TEXT
         )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS skincare_routines (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            morning_routine TEXT NOT NULL,
+            night_routine TEXT NOT NULL,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )''')
         connection.commit()
+create_tables()
 
 def insert_user(username, password):
     with get_db_connection() as conn:
@@ -118,10 +127,15 @@ def findappointment(username):
         appointments = cursor.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
         return [dict(appointment) for appointment in appointments]
 
-def findallappointment():
+def findappointment(username):
     with get_db_connection() as conn:
-        appointments = conn.execute("SELECT * FROM appointment").fetchall()
-    return appointments
+        cursor = conn.cursor()
+        appointments = cursor.execute(
+            "SELECT * FROM appointment WHERE username = ?", (username,)
+        ).fetchall()
+
+        return [dict(row) for row in appointments]  # Convert Rows to Dicts
+
 
 def update_appointment_status(appointment_id):
     with get_db_connection() as conn:
@@ -133,13 +147,13 @@ def delete_appointment(appointment_id):
         conn.execute("DELETE FROM appointment WHERE id = ?", (appointment_id,))
         conn.commit()
 
-# Create tables at startup
-create_tables()
 
 # ---------------------------
 # Chatbot Endpoint
 # ---------------------------
 # Route to handle chatbot requests
+import dateparser
+
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
     data = request.get_json()
@@ -152,80 +166,184 @@ def chatbot():
     if not gemini_api_key:
         return jsonify({"error": "Gemini API key not configured."}), 500
 
-    # Construct API request
-    payload = {
-        "contents": [{
-            "parts": [{"text": user_input}]
-        }]
-    }
+    # Use session-based conversation tracking
+    if "conversation_state" not in session:
+        session["conversation_state"] = {}
+
+    conversation_state = session["conversation_state"]
+
+    # If waiting for a date input
+    if conversation_state.get("awaiting_date"):
+        parsed_date = dateparser.parse(user_input)  # Convert natural language dates
+        if parsed_date:
+            conversation_state["date"] = parsed_date.strftime("%Y-%m-%d %H:%M")  # Format date
+            conversation_state["awaiting_date"] = False
+            conversation_state["awaiting_reason"] = True  # Move to the next step
+            session.modified = True
+            return jsonify({
+                "botReply": f"Great! Your appointment is set for {conversation_state['date']}. Now, please describe the reason for your appointment.",
+                "type": "appointment_flow"
+            })
+        else:
+            return jsonify({
+                "botReply": "I couldn't understand that date format. Please try again with a valid date, such as 'Next Monday at 3 PM' or '10th Feb 2025 at 2 PM'.",
+                "type": "error"
+            })
+
+    # If waiting for a reason input
+    if conversation_state.get("awaiting_reason"):
+        reason = user_input
+        user = get_user(session.get("username"))
+        survey_data = dict(get_survey_response(user["id"]))  # ✅ Convert Row to dictionary
+
+        if not user or not survey_data:
+            return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
+
+        # Create appointment
+        appointment_id = insert_appointment_data(
+            name=survey_data["name"],
+            email=user["username"],
+            date=conversation_state["date"],
+            skin=survey_data["skin_type"],
+            phone=survey_data.get("phone", ""),  # ✅ Now this works
+            age=survey_data["age"],
+            address=reason,
+            status=False,
+            username=user["username"]
+        )
+
+        # Reset conversation state
+        session["conversation_state"] = {}
+        session.modified = True
+
+        return jsonify({
+            "botReply": f"Your appointment has been successfully scheduled for {conversation_state['date']} with the reason: {reason}. Your reference ID is APPT-{appointment_id}.",
+            "type": "appointment_confirmation",
+            "appointmentId": appointment_id
+        })
+
+    # If user initiates an appointment
+    if "make an appointment" in user_input.lower():
+        conversation_state["awaiting_date"] = True
+        session.modified = True
+        return jsonify({
+            "botReply": "When would you like to schedule your appointment? You can type any format (e.g., 'March 10 at 3 PM', 'Tomorrow 4 PM', 'Next Monday').",
+            "type": "appointment_flow"
+        })
+
+    # Default response from Gemini AI
+    payload = {"contents": [{"parts": [{"text": user_input}]}]}
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
     headers = {"Content-Type": "application/json"}
 
     try:
-        # First handle appointment booking logic if triggered
-        if "make an appointment" in user_input.lower() or "schedule consultation" in user_input.lower():
-            # Get user details from database
-            user = get_user(session.get("username"))
-            survey_data = get_survey_response(user["id"]) if user else None
-            
-            if not user or not survey_data:
-                return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
-
-            # Extract appointment details from user input using Gemini
-            payload["contents"][0]["parts"][0]["text"] = f"""
-            Extract appointment details from this request: {user_input}
-            Required format:
-            Date: [requested date/time]
-            Reason: [short reason]
-            Preferred contact method: [phone/email]
-            """
-            
-            # Get structured response from Gemini
-            response = requests.post(endpoint, headers=headers, json=payload)
-            response.raise_for_status()
-            extraction = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-            
-            # Create appointment record
-            appointment_id = insert_appointment_data(
-                name=survey_data["name"],
-                email=user["username"],  # Using username as email for simplicity
-                date=extraction.split("Date: ")[1].split("\n")[0] if "Date: " in extraction else "ASAP",
-                skin=survey_data["skin_type"],
-                phone=survey_data.get("phone", ""),
-                age=survey_data["age"],
-                address=extraction.split("Reason: ")[1].split("\n")[0] if "Reason: " in extraction else "General Consultation",
-                status=False,
-                username=user["username"]
-            )
-            
-            return jsonify({
-                "botReply": f"Appointment scheduled! Your reference ID: APPT-{appointment_id}",
-                "type": "appointment_confirmation",
-                "appointmentId": appointment_id
-            })
-
-        # Default Gemini response handling
         response = requests.post(endpoint, headers=headers, json=payload)
         response.raise_for_status()
         response_json = response.json()
-
         bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-        
-        # Enhanced empty response handling
-        if not bot_reply:
-            return jsonify({
-                "botReply": "I'm having trouble understanding. Could you rephrase that?",
-                "type": "clarification_request"
-            })
 
-        return jsonify({
-            "botReply": bot_reply,
-            "type": "general_response"
-        })
+        if not bot_reply:
+            return jsonify({"botReply": "I'm having trouble understanding. Could you rephrase that?", "type": "clarification_request"})
+
+        return jsonify({"botReply": bot_reply, "type": "general_response"})
 
     except requests.exceptions.RequestException as e:
         print("Gemini API error:", e)
         return jsonify({"error": "Error processing request."}), 500
+
+
+def generate_skincare_routine(user_details):
+    """
+    Calls Google Gemini API to generate a skincare routine based on user details.
+    """
+    prompt = f"""
+    Based on the following user skin details, generate a personalized skincare routine:
+    
+    Age: {user_details['age']}
+    Gender: {user_details['gender']}
+    Skin Type: {user_details['skin_type']}
+    Main Concerns: {user_details['concerns']}
+    Acne Frequency: {user_details['acne_frequency']}
+    Skincare Routine: {user_details['skincare_routine']}
+    Stress Level: {user_details['stress_level']}
+
+    Generate:
+    1. A morning skincare routine with 4-5 steps.
+    2. A night skincare routine with 4-5 steps.
+
+    Keep the recommendations easy to follow and product-neutral.
+    """
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINIE_API_KEY}"
+
+    response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+
+    if response.status_code == 200:
+        data = response.json()
+        bot_reply = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+
+        routines = bot_reply.split("\n\n")
+        morning_routine = routines[0] if len(routines) > 0 else "No routine found"
+        night_routine = routines[1] if len(routines) > 1 else "No routine found"
+
+        return {"morning_routine": morning_routine, "night_routine": night_routine}
+    
+    return {"error": "Failed to fetch routine from AI"}
+
+def save_skincare_routine(user_id, morning_routine, night_routine):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        # Check if the user already has a routine
+        cursor.execute("SELECT id FROM skincare_routines WHERE user_id = ?", (user_id,))
+        existing_routine = cursor.fetchone()
+
+        if existing_routine:
+            # If exists, UPDATE
+            cursor.execute(
+                """UPDATE skincare_routines 
+                   SET morning_routine = ?, night_routine = ?, last_updated = CURRENT_TIMESTAMP 
+                   WHERE user_id = ?""",
+                (morning_routine, night_routine, user_id)
+            )
+        else:
+            # If not, INSERT a new routine
+            cursor.execute(
+                """INSERT INTO skincare_routines (user_id, morning_routine, night_routine) 
+                   VALUES (?, ?, ?)""",
+                (user_id, morning_routine, night_routine)
+            )
+
+        conn.commit()
+
+
+def get_skincare_routine(user_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT morning_routine, night_routine FROM skincare_routines WHERE user_id = ?", (user_id,))
+        routine = cursor.fetchone()
+    return routine if routine else {"morning_routine": "No routine found", "night_routine": "No routine found"}
+
+@app.route("/generate_routine", methods=["POST"])
+def generate_routine():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    user = get_user(session["username"])
+    user_details = get_survey_response(user["id"])
+
+    if not user_details:
+        return jsonify({"error": "User details not found"})
+
+    routine = generate_skincare_routine(user_details)
+    save_skincare_routine(user["id"], routine["morning_routine"], routine["night_routine"])
+
+    return jsonify({"message": "Routine Generated", "routine": routine})
+
 
 # ---------------------------
 # User Authentication & Survey Routes
@@ -309,8 +427,9 @@ def profile():
     if "username" in session:
         user = get_user(session["username"])
         survey_response = get_survey_response(user["id"])
+        routine = get_skincare_routine(user["id"])  # Fetch AI-generated routine
         if survey_response:
-            return render_template("profile.html", survey=survey_response)
+            return render_template("profile.html", survey=survey_response, routine=routine)
     return redirect(url_for("index"))
 
 # ---------------------------
@@ -323,7 +442,7 @@ def bookappointment():
 @app.route("/appointment", methods=["POST"])
 def appointment():
     if "username" not in session:
-        return redirect(url_for("login"))
+        return jsonify({"error": "Unauthorized"}), 401
 
     name = request.form.get("name")
     email = request.form.get("email")
@@ -333,10 +452,12 @@ def appointment():
     age = request.form.get("age")
     address = request.form.get("reason")
     username = session["username"]
-    status = False
+    status = False  # Default status is "Pending"
 
-    insert_appointment_data(name, email, date, skin, phone, age, address, status, username)
-    return redirect(url_for("userappoint"))
+    appointment_id = insert_appointment_data(name, email, date, skin, phone, age, address, status, username)
+
+    return jsonify({"message": "Appointment successfully booked", "appointmentId": appointment_id})
+
 
 
 
@@ -347,9 +468,13 @@ def allappointments():
 
 @app.route("/userappointment")
 def userappoint():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
     username = session.get("username")
     appointments = findappointment(username)
     return render_template("userappointment.html", all_appointments=appointments)
+
 
 @app.route("/face_analysis", methods=["POST"])
 def face_analysis():
