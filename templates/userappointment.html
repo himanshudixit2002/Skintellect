@@ -1,21 +1,20 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="h-[100vh] w-full relative flex flex-col items-center justify-center bg-gray-100">
-    <div class="h-[70vh] w-full flex flex-col justify-center items-center gap-9 z-20">
-        
-        <!-- Header -->
-        <div class="h-[10vh] w-full flex items-center justify-center">
-            <h1 class="text-black text-5xl md:text-6xl font-serif flex items-center gap-4">
-                <i class="fa-solid fa-calendar-check text-6xl md:text-7xl text-blue-600"></i> 
-                <span>Doctor's Appointments</span>
-            </h1>
-        </div>
+<div class="h-screen w-full flex flex-col items-center justify-center bg-gray-100 px-4 sm:px-8">
+    
+    <!-- Header -->
+    <div class="w-full max-w-3xl flex flex-col items-center text-center">
+        <h1 class="text-black text-4xl sm:text-5xl md:text-6xl font-serif flex items-center gap-3">
+            <i class="fa-solid fa-calendar-check text-blue-600"></i> 
+            <span>Doctor's Appointments</span>
+        </h1>
+        <p class="text-gray-500 mt-2 text-sm sm:text-base">Manage your booked appointments</p>
+    </div>
 
-        <!-- Appointment List -->
-        <div id="appointmentsContainer" class="h-[80vh] w-4/5 bg-white bg-opacity-95 p-8 rounded-xl shadow-lg shadow-gray-500 overflow-y-auto flex flex-col gap-3">
-            <p id="noAppointmentsMsg" class="text-center text-gray-500 text-xl hidden">No appointments found.</p>
-        </div>
+    <!-- Appointment List -->
+    <div id="appointmentsContainer" class="mt-6 w-full max-w-3xl bg-white bg-opacity-95 p-5 rounded-xl shadow-lg shadow-gray-500 overflow-y-auto max-h-[70vh] flex flex-col gap-3">
+        <p id="noAppointmentsMsg" class="text-center text-gray-500 text-lg hidden">No appointments found.</p>
     </div>
 </div>
 
@@ -50,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
         appointments.forEach((appointment) => {
             const appointmentDiv = document.createElement("div");
             appointmentDiv.classList.add(
-                "h-auto", "w-full", "bg-gray-100", "p-5", "rounded-xl", "border",
+                "h-auto", "w-full", "bg-gray-100", "p-4", "rounded-lg", "border",
                 "border-gray-300", "shadow-md", "hover:bg-blue-50", "transition-all",
                 "flex", "flex-col", "gap-2", "relative"
             );
@@ -59,28 +58,25 @@ document.addEventListener("DOMContentLoaded", function () {
             const statusColor = status === "Pending" ? "text-red-500" : "text-green-500";
 
             appointmentDiv.innerHTML = `
-                <p class="text-lg"><strong>Name:</strong> ${appointment.name}</p>
-                <p class="text-lg"><strong>Email:</strong> ${appointment.email}</p>
-                <p class="text-lg"><strong>Date:</strong> ${appointment.date}</p>
-                <p class="text-lg"><strong>Skin Type:</strong> ${appointment.skin}</p>
-                <p class="text-lg"><strong>Status:</strong> <span class="${statusColor} font-bold">${status}</span></p>
+                <div class="flex flex-col sm:flex-row sm:justify-between">
+                    <div>
+                        <p class="text-lg"><strong>Name:</strong> ${appointment.name}</p>
+                        <p class="text-lg"><strong>Email:</strong> ${appointment.email}</p>
+                        <p class="text-lg"><strong>Date:</strong> ${appointment.date}</p>
+                        <p class="text-lg"><strong>Skin Type:</strong> ${appointment.skin}</p>
+                        <p class="text-lg"><strong>Status:</strong> <span class="${statusColor} font-bold">${status}</span></p>
+                    </div>
+                    <!-- Delete Button -->
+                    <button class="sm:self-center mt-2 sm:mt-0 bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-all text-sm"
+                        onclick="handleDelete(${appointment.id}, this)">Delete</button>
+                </div>
             `;
 
-            // Delete button
-            const deleteIcon = document.createElement("i");
-            deleteIcon.classList.add(
-                "fas", "fa-trash-alt", "cursor-pointer", "text-red-500",
-                "absolute", "top-4", "right-4", "hover:text-red-700", "transition-all", "text-xl"
-            );
-            deleteIcon.setAttribute("aria-hidden", "true");
-            deleteIcon.addEventListener("click", () => handleDelete(appointment.id, appointmentDiv));
-
-            appointmentDiv.appendChild(deleteIcon);
             container.appendChild(appointmentDiv);
         });
     }
     
-    function handleDelete(appointmentId, appointmentDiv) {
+    function handleDelete(appointmentId, buttonElement) {
         if (!confirm("Are you sure you want to delete this appointment?")) return;
 
         fetch("/delete_user_request", {
@@ -92,11 +88,10 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.message === "Appointment deleted successfully") {
                 console.log("Deleted successfully:", data);
-
                 // Remove from UI with fade-out animation
-                appointmentDiv.classList.add("opacity-0", "transition-opacity", "duration-500");
+                buttonElement.closest("div").classList.add("opacity-0", "transition-opacity", "duration-500");
                 setTimeout(() => {
-                    appointmentDiv.remove();
+                    buttonElement.closest("div").remove();
                     checkNoAppointments();
                 }, 500);
             } else {
