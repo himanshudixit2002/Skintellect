@@ -15,9 +15,9 @@ from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 
 # Load environment variables from .env file
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise Exception("OPENAI_API_KEY not set. Please add it to your .env file.")
+GEMINIE_API_KEY = os.getenv("GEMINIE_API_KEY")
+if not GEMINIE_API_KEY:
+    raise Exception("GEMINIE_API_KEY not set. Please add it to your .env file.")
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -138,34 +138,45 @@ create_tables()
 # ---------------------------
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
-    user_input = request.json.get("userInput")
+    # Get JSON payload from the request
+    data = request.get_json()
+    user_input = data.get("userInput")
     if not user_input:
-        return jsonify({"error": "User input is required"}), 400
+        return jsonify({"error": "No user input provided."}), 400
+
+    # Retrieve Gemini API key from environment variables
+    geminie_api_key = os.environ.get("GEMINIE_API_KEY")
+    if not geminie_api_key:
+        return jsonify({"error": "Gemini API key not configured."}), 500
+
+    # Construct payload for Gemini API (adjust parameters per Gemini's documentation)
+    payload = {
+        "prompt": user_input,
+        # Add any additional parameters that Gemini might require
+    }
+
+    # Set up the Gemini endpoint.
+    # Here we assume that the API key is provided as a query parameter. Adjust if needed.
+    endpoint = f"https://geminie.googleapis.com/v1/chat:query?key={geminie_api_key}"
+
+    headers = {
+        "Content-Type": "application/json"
+        # If Gemini expects the key in a Bearer token, use:
+        # "Authorization": f"Bearer {geminie_api_key}"
+    }
+
     try:
-        headers = {
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        data = {
-            "model": "gpt-3.5-turbo",  # or "gpt-4" if your key supports it
-            "messages": [{"role": "user", "content": user_input}],
-            "max_tokens": 150,
-        }
-        response = requests.post("https://api.openai.com/v1/chat/completions", json=data, headers=headers)
-        response.raise_for_status()  # This will raise an exception for non-200 responses
+        # Make the API request
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()  # Raise an error for bad status codes
         response_json = response.json()
-        if "error" in response_json:
-            error_message = response_json["error"].get("message", "Unknown error")
-            print("OpenAI API Error:", error_message)
-            return jsonify({"error": error_message}), 500
-        bot_reply = response_json["choices"][0]["message"]["content"]
+
+        # Assume that Gemini returns the chatbot reply in a key called "reply"
+        bot_reply = response_json.get("reply", "I'm sorry, I didn't understand that.")
         return jsonify({"botReply": bot_reply})
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-
+        print("Gemini API error:", e)
+        return jsonify({"error": "Error processing request."}), 500
 
 # ---------------------------
 # User Authentication & Survey Routes
