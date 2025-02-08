@@ -149,30 +149,32 @@ def chatbot():
     if not gemini_api_key:
         return jsonify({"error": "Gemini API key not configured."}), 500
 
-    # Construct the payload in Gemini's format
+    # Construct API request
     payload = {
         "contents": [{
             "parts": [{"text": user_input}]
         }]
     }
-
-    # Correct Gemini API endpoint
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
-
-    headers = {
-        "Content-Type": "application/json"
-    }
+    headers = {"Content-Type": "application/json"}
 
     try:
         response = requests.post(endpoint, headers=headers, json=payload)
         response.raise_for_status()
         response_json = response.json()
 
-        # Extract the chatbot's response from the API response
-        bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "I'm sorry, I didn't understand that.")
+        # Print API response for debugging
+        print("Full Gemini API Response:", response_json)
+
+        # Adjust this based on the actual response structure
+        bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+
+        # If response is empty, return a default message
+        if not bot_reply:
+            bot_reply = "I'm sorry, but I couldn't generate a response. Try asking differently."
 
         return jsonify({"botReply": bot_reply})
-    
+
     except requests.exceptions.RequestException as e:
         print("Gemini API error:", e)
         return jsonify({"error": "Error processing request."}), 500
