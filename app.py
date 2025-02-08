@@ -21,9 +21,9 @@ if not GEMINIE_API_KEY:
 
 # Initialize Flask application
 app = Flask(__name__)
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.secret_key = os.getenv("SECRET_KEY", "4545")
-DATABASE = 'app.db'
+app.config['TEMPLATES_AUTO_RELOAD'] = os.getenv("FLASK_ENV") == "development"
+app.secret_key = os.environ["SECRET_KEY"]  
+DATABASE = os.environ["DATABASE_URL"]  
 
 # Load the skincare products dataset (ensure the path is correct)
 df = pd.read_csv(os.path.join("dataset", "updated_skincare_products.csv"))
@@ -318,14 +318,14 @@ def delete_user_request():
 # AI Skin Analysis & Product Recommendation
 # ---------------------------
 # Initialize the Roboflow skin detection model
-rf_skin = Roboflow(api_key=os.getenv("ROBOFLOW_API_KEY", "9dsh7sHI8YmicqwPkdd2"))
+rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
 project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
 
 # Initialize the oiliness detection model
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key=os.getenv("OILINESS_API_KEY", "Gqf1hrF7jdAh8EsbOoTM")
+    api_key=os.environ["OILINESS_API_KEY"]
 )
 # Mapping to convert oiliness model class names if needed
 class_mapping = {
@@ -389,4 +389,4 @@ def predict():
     return render_template("face_analysis.html", data={})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

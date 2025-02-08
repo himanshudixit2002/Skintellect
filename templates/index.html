@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
 {% block title %}Skintellect{% endblock %}
 {% block content %}
-<div class="min-h-screen flex flex-col">
-  <!-- Chatbot Interface -->
-  <div id="chat-container" class="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg z-50">
-    <div class="bg-emerald-400 text-white p-4 rounded-t-lg flex justify-between items-center">
-      <h3 class="font-semibold">Skin Health Assistant</h3>
-      <button id="close-chat" class="hover:text-emerald-100">×</button>
-    </div>
+<div class="min-h-screen">
+  <!-- Hero Section -->
+  <div class="relative bg-gradient-to-r from-purple-800 to-blue-900 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-4xl md:text-6xl font-bold mb-6">Smart Skin Analysis</h1>
+      <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+        Get personalized skincare recommendations using AI-powered analysis
     <div class="h-96 p-4 flex flex-col">
       <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-2">
         <div class="bg-blue-50 p-3 rounded-lg">

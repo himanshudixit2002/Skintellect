@@ -15,7 +15,7 @@
     }
     body {
       overflow-x: hidden;
-      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("../static/assets/bg5.webp");
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{{ url_for('static', filename='assets/bg5.webp') }}");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -80,34 +80,58 @@
   </div>
 
   <!-- Chatbot Interface (initially hidden) -->
-  <div id="chat-container" class="hidden fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg z-50">
-    <div class="bg-emerald-400 text-white p-4 rounded-t-lg flex justify-between items-center">
-      <h3 class="font-semibold">Skin Health Assistant</h3>
-      <button id="close-chat" class="hover:text-emerald-100">×</button>
-    </div>
-    <div class="h-96 p-4 flex flex-col">
-      <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-2">
-        <div class="bg-blue-50 p-3 rounded-lg">
-          <p class="text-sm">
-            Hello! I'm your skin health assistant. Ask me about skincare routines, product recommendations, or any skin concerns.
-          </p>
+  <!-- Enhanced Chat Interface -->
+  <div id="chat-container" class="hidden fixed bottom-0 right-0 md:bottom-4 md:right-4 w-full md:w-96 h-[70vh] md:h-[60vh] bg-white shadow-xl rounded-t-2xl md:rounded-lg transition-all duration-300 ease-out z-50">
+    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-t-2xl md:rounded-t-lg flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+            <i class="fas fa-robot text-emerald-500"></i>
+          </div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-400 rounded-full"></span>
+        </div>
+        <div>
+          <h3 class="font-semibold">Skin Health Assistant</h3>
+          <p class="text-xs opacity-75">AI-powered dermatology support</p>
         </div>
       </div>
-      <div class="border-t pt-4">
-        <div class="flex space-x-2">
-          <input type="text" id="user-input" placeholder="Type your message..." 
-                 class="flex-1 border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          <button id="send-btn" class="bg-emerald-400 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 text-sm">
-            Send
+      <button id="close-chat" class="p-1 hover:bg-white/10 rounded-full transition-colors">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="flex flex-col h-[calc(100%-136px)]">
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="chat-message bot-message animate-fade-in">
+          <div class="bg-emerald-50 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%]">
+            <p class="text-sm text-emerald-900">Hello! I'm your AI skin health assistant. How can I help you today?</p>
+            <span class="text-xs text-emerald-500 mt-1 block">11:42 AM</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-emerald-100 p-4 bg-white">
+        <div class="flex items-center space-x-2">
+          <div class="typing-indicator hidden items-center space-x-2 px-4">
+            <div class="dot animate-bounce"></div>
+            <div class="dot animate-bounce delay-100"></div>
+            <div class="dot animate-bounce delay-200"></div>
+          </div>
+          <input type="text" id="user-input"
+                 class="flex-1 border-2 border-emerald-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-200 focus:ring-2 focus:ring-emerald-50 transition-all"
+                 placeholder="Type your skin concern...">
+          <button id="send-btn" class="bg-emerald-500 text-white p-3 rounded-2xl hover:bg-emerald-600 transition-colors shadow-md">
+            <i class="fas fa-paper-plane"></i>
           </button>
         </div>
+        <p class="text-xs text-gray-400 mt-2 px-2">AI-powered responses. May occasionally produce errors.</p>
       </div>
     </div>
   </div>
 
-  <!-- Open Chat Button (visible when the chat widget is closed manually) -->
-  <button id="open-chat" class="hidden fixed bottom-4 right-4 w-16 h-16 rounded-full bg-emerald-400 text-white shadow-lg z-50">
-    Chat
+  <!-- Floating Action Button -->
+  <button id="open-chat" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-500 text-white shadow-lg z-50 hover:bg-emerald-600 transition-all hover:scale-105">
+    <i class="fas fa-comment-dots text-xl"></i>
   </button>
 
   <!-- Footer -->
