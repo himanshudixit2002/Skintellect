@@ -22,7 +22,8 @@ rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
 project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
 CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", api_key=os.environ["OILINESS_API_KEY"])
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6") 
+
 
 
 # Load environment variables from .env file
