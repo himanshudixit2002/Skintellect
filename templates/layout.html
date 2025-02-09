@@ -50,16 +50,12 @@
         <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-700">Profile</a>
         <!-- Dedicated Chatbot Button in Mobile Dropdown -->
         <a href="#" id="dropdown-chat-button" class="block px-4 py-2 hover:bg-gray-700">Chatbot</a>
-        
-        <!-- APK Download Button (Mobile Only) -->
-        <a href="https://drive.google.com/uc?export=download&id=1bhEXK-Cr6bJQ40pUQlmvm1dHwXCpT5mP" 
-           class="block px-4 py-2 mt-2 mx-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg 
-                  hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
-           download="Skintellect.apk">
-          <i class="fas fa-download mr-2"></i>APK Download
-        </a>
-
-        <a href="{{ url_for('logout') }}" class="block px-4 py-2 hover:bg-gray-700">Logout</a>
+        <!-- Conditional Login/Logout Button for Mobile -->
+        {% if session.get('username') %}
+          <a href="{{ url_for('logout') }}" class="block px-4 py-2 mt-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="block px-4 py-2 mt-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">Login</a>
+        {% endif %}
       </div>
     </div>
 
@@ -69,12 +65,20 @@
       <li><a href="{{ url_for('predict') }}" class="block md:inline-block hover:text-gray-400">Face Analysis</a></li>
       <li><a href="{{ url_for('userappoint') }}" class="block md:inline-block hover:text-gray-400">My Appointments</a></li>
       <li><a href="{{ url_for('profile') }}" class="block md:inline-block hover:text-gray-400">Profile</a></li>
-      {% if session.get('user') %}
-        <li><a href="{{ url_for('logout') }}" class="block md:inline-block hover:text-gray-400">Logout</a></li>
+      {% if session.get('username') %}
+        <li>
+          <a href="{{ url_for('logout') }}" class="block md:inline-block bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition duration-300">
+            Logout
+          </a>
+        </li>
         <!-- Dedicated Chatbot Button in Navbar -->
         <li><a href="#" id="nav-chat-button" class="block md:inline-block hover:text-gray-400">Chatbot</a></li>
       {% else %}
-        <li><a href="{{ url_for('login') }}" class="block md:inline-block hover:text-gray-400">Login</a></li>
+        <li>
+          <a href="{{ url_for('login') }}" class="block md:inline-block bg-green-500 px-3 py-1 rounded hover:bg-green-600 transition duration-300">
+            Login
+          </a>
+        </li>
         <li><a href="{{ url_for('register') }}" class="block md:inline-block hover:text-gray-400">Register</a></li>
       {% endif %}
     </ul>
@@ -85,7 +89,6 @@
   </div>
 
   <!-- Chatbot Interface (initially hidden) -->
-  <!-- Enhanced Chat Interface -->
   <div id="chat-container" class="hidden fixed bottom-0 right-0 md:bottom-4 md:right-4 w-full md:w-96 h-[70vh] md:h-[60vh] bg-white shadow-xl rounded-t-2xl md:rounded-lg transition-all duration-300 ease-out z-50">
     <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-t-2xl md:rounded-t-lg flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -129,12 +132,12 @@
             <i class="fas fa-paper-plane"></i>
           </button>
         </div>
-        <p class="text-xs text-gray-400 mt-2 px-2">Have a Nice Day!
+        <p class="text-xs text-gray-400 mt-2 px-2">Have a Nice Day!</p>
       </div>
     </div>
   </div>
 
-  <!-- Floating Action Button -->
+  <!-- Floating Action Button for Chat -->
   <button id="open-chat" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-500 text-white shadow-lg z-50 hover:bg-emerald-600 transition-all hover:scale-105">
     <i class="fas fa-comment-dots text-xl"></i>
   </button>
@@ -172,7 +175,7 @@
         </div>
         <div class="mt-4">
           <div class="flex mt-2">
-            <input type="email" placeholder="himanshudixit2406" class="p-1 text-sm rounded-l bg-blue-900/50 border border-blue-400/30">
+            <input type="email" placeholder="Enter your email" class="p-1 text-sm rounded-l bg-blue-900/50 border border-blue-400/30">
           </div>
         </div>
       </div>
@@ -265,36 +268,6 @@
         chatContainer.classList.remove('hidden');
         openChatBtn.classList.add('hidden');
       });
-  
-      // Helper function to open the chat widget
-      function openChat() {
-        chatContainer.classList.remove('hidden');
-        openChatBtn.classList.add('hidden');
-      }
-      
-      // Attach event listeners to dedicated Chatbot buttons if they exist
-      const navChatButton = document.getElementById("nav-chat-button");
-      const footerChatButton = document.getElementById("footer-chat-button");
-      const dropdownChatButton = document.getElementById("dropdown-chat-button");
-      
-      if (navChatButton) {
-          navChatButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            openChat();
-          });
-      }
-      if (footerChatButton) {
-          footerChatButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            openChat();
-          });
-      }
-      if (dropdownChatButton) {
-          dropdownChatButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            openChat();
-          });
-      }
     });
   </script>
 </body>

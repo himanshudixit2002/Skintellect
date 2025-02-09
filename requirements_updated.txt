@@ -11,3 +11,15 @@ dateparser
 langchain
 sentence-transformers
 rasa
+flask 
+opencv-python 
+requests 
+pandas 
+transformers 
+torch 
+torchvision 
+torchaudio 
+google-generativeai 
+langchain 
+langchain-community 
+python-dotenv

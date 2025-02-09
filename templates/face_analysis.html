@@ -2,9 +2,9 @@
 
 {% block content %}
 <style>
-  /* Global Styling and Blue Theme */
+  /* Global Styling */
   body {
-      background-color: #f7fbff; /* Light blue background */
+      background-color: #f7fbff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .container-main {
@@ -14,9 +14,10 @@
       justify-content: center;
       padding: 20px;
   }
-  h1, h2, h3, h4 {
+  h1, h2, h3 {
       font-weight: 700;
   }
+
   /* Upload Box Styling */
   .upload-box {
       background: #ffffff;
@@ -24,7 +25,7 @@
       border-radius: 15px;
       padding: 50px;
       text-align: center;
-      transition: background-color 0.4s, border-color 0.4s;
+      transition: all 0.4s ease-in-out;
       cursor: pointer;
       margin-bottom: 20px;
       position: relative;
@@ -36,23 +37,12 @@
   .upload-box input[type="file"] {
       display: none;
   }
-  .upload-box h3 {
-      color: #007BFF;
-      margin-bottom: 10px;
-  }
-  .upload-box p {
-      color: #555;
-  }
   .file-size-note {
       font-size: 0.9rem;
       color: #007BFF;
       margin-top: 10px;
   }
-  .feedback {
-      color: #007BFF;
-      font-size: 1.1rem;
-      margin-top: 10px;
-  }
+
   /* Button Styling */
   .btn-blue {
       background-color: #007BFF;
@@ -61,15 +51,33 @@
       padding: 12px 30px;
       font-size: 1.2rem;
       color: #fff;
-      transition: background-color 0.4s, transform 0.3s;
+      transition: all 0.3s;
   }
   .btn-blue:hover {
       background-color: #0056b3;
-      transform: translateY(-2px);
+      transform: scale(1.05);
   }
-  /* Results Section Styling */
+
+  /* Loader Animation */
+  .loader {
+      display: none;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+  }
+  @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+  }
+
+  /* Results Section */
   .results-section {
       margin-top: 30px;
+      display: none;
   }
   .card-custom {
       background: #fff;
@@ -82,14 +90,7 @@
       color: #007BFF;
       font-weight: bold;
   }
-  .list-group-item {
-      border: none;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
-  }
-  .list-group-item:last-child {
-      border-bottom: none;
-  }
+
   /* Annotated Image Styling */
   .annotated-img {
       max-width: 100%;
@@ -98,166 +99,137 @@
       margin-top: 20px;
       transition: opacity 0.5s;
   }
-  /* Animations */
-  .fade-in {
-      animation: fadeIn 0.8s ease-in;
-  }
-  @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+
+  /* Recommendation Styling */
+  .recommendation-card {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
+      background-color: #f9f9f9;
   }
 </style>
 
 <div class="container-main">
   <div class="w-100" style="max-width: 650px;">
-    <h1 class="text-center mb-4" style="color: #007BFF; font-size: 2.8rem;">AI Skin Analysis</h1>
-    <p class="text-center mb-4" style="color: #ffffff;">
-      Upload your image to receive an expert AI evaluation of your skin along with personalized product recommendations.
-    </p>
+    <h1 class="text-center mb-4" style="color: #007BFF;">AI Skin Analysis</h1>
     
     <!-- Upload Form -->
-    <form action="/predict" method="post" enctype="multipart/form-data">
+    <form id="uploadForm" method="post" enctype="multipart/form-data">
       <div class="upload-box" id="uploadBox">
         <input id="fileInput" type="file" name="image" accept="image/*" required>
-        <h3>Drag & Drop or Click to Select Your Image</h3>
+        <h3>Drag & Drop or Click to Upload</h3>
         <p>Supported formats: JPG, PNG</p>
-        <p class="file-size-note">Maximum file size: 720px</p>
+        <p class="file-size-note">Max size: 2MB</p>
         <p id="fileFeedback" class="feedback" style="display: none;"></p>
       </div>
       <div class="text-center">
         <button class="btn-blue" type="submit">Analyze Skin</button>
+        <div class="loader" id="loadingSpinner"></div>
       </div>
     </form>
 
     <!-- Results Section -->
-    <div id="resultsSection" class="results-section" style="display: none;">
+    <div id="resultsSection" class="results-section">
       <div class="card-custom fade-in">
-        <h2 class="card-title">Detected Conditions</h2>
+        <h2 class="card-title">🔬 Detected Conditions</h2>
         <ul id="conditionsList" class="list-group"></ul>
       </div>
       <div class="card-custom fade-in">
-        <h2 class="card-title">Product Recommendations</h2>
-        <div id="recommendationsContainer" class="row"></div>
+        <h2 class="card-title">💡 Skincare Tips</h2>
+        <p id="aiAnalysis"></p>
       </div>
-      <div class="text-center fade-in">
-        <h2 class="card-title">Annotated Image</h2>
-        <img id="annotatedImage" class="annotated-img" src="" alt="Annotated Image" style="display: none;">
+      <div class="card-custom fade-in">
+        <h2 class="card-title">🛍️ Recommended Products</h2>
+        <div id="recommendationsContainer"></div>
+      </div>
+      <div class="card-custom fade-in">
+        <h2 class="card-title">🔍 AI Analyzed Image</h2>
+        <img id="annotatedImage" class="annotated-img" src="" alt="Analyzed Image" style="display: none;">
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  // Get DOM Elements
-  const uploadBox = document.getElementById('uploadBox');
-  const fileInput = document.getElementById('fileInput');
-  const fileFeedback = document.getElementById('fileFeedback');
-  const resultsSection = document.getElementById('resultsSection');
-  const conditionsList = document.getElementById('conditionsList');
-  const recommendationsContainer = document.getElementById('recommendationsContainer');
-  const annotatedImage = document.getElementById('annotatedImage');
+document.addEventListener("DOMContentLoaded", function () {
+    const uploadBox = document.getElementById("uploadBox");
+    const fileInput = document.getElementById("fileInput");
+    const fileFeedback = document.getElementById("fileFeedback");
+    const uploadForm = document.getElementById("uploadForm");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const resultsSection = document.getElementById("resultsSection");
+    const conditionsList = document.getElementById("conditionsList");
+    const recommendationsContainer = document.getElementById("recommendationsContainer");
+    const aiAnalysis = document.getElementById("aiAnalysis");
+    const annotatedImage = document.getElementById("annotatedImage");
 
-  // Trigger file input on click
-  uploadBox.addEventListener('click', () => fileInput.click());
+    uploadBox.addEventListener("click", () => fileInput.click());
 
-  // File size limit (2MB)
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                alert("File too large! Please select a file under 2MB.");
+                fileInput.value = "";
+                return;
+            }
+            fileFeedback.style.display = "block";
+            fileFeedback.textContent = "Selected File: " + file.name;
+        } else {
+            fileFeedback.style.display = "none";
+        }
+    });
 
-  // Show file name feedback and check file size when a file is selected
-  fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          if (file.size > MAX_FILE_SIZE) {
-              alert("The selected file is too large. Please choose a file smaller than 2MB.");
-              fileInput.value = ""; // Clear the file input
-              fileFeedback.style.display = 'none';
-              return;
-          }
-          fileFeedback.style.display = 'block';
-          fileFeedback.textContent = "Selected File: " + file.name;
-      } else {
-          fileFeedback.style.display = 'none';
-      }
-  });
+    uploadForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
 
-  // Check if prediction data was passed from the server (if the page is reloaded with data)
-  var data = '{{ data | tojson | safe }}';
-  if (data) {
-      try {
-          const jsonData = JSON.parse(data);
-          if (Object.keys(jsonData).length > 0) {
-              renderResults(jsonData);
-          }
-      } catch (e) {
-          console.error("Error parsing JSON data:", e);
-      }
-  }
+        loadingSpinner.style.display = "block";
 
-  // Function to render the results from JSON data
-  function renderResults(jsonData) {
-      // Render Detected Conditions
-      conditionsList.innerHTML = '';
-      if (jsonData.classes && jsonData.classes.length > 0) {
-          jsonData.classes.forEach(condition => {
-              const li = document.createElement('li');
-              li.className = 'list-group-item';
-              li.textContent = condition;
-              conditionsList.appendChild(li);
-          });
-      } else {
-          conditionsList.innerHTML = '<li class="list-group-item">No conditions detected.</li>';
-      }
-      
-      // Render Recommendations
-      recommendationsContainer.innerHTML = '';
-      if (jsonData.recommendations && jsonData.recommendations.length > 0) {
-          jsonData.recommendations.forEach(rec => {
-              // Each recommendation is [condition, products]
-              const colDiv = document.createElement('div');
-              colDiv.className = 'col-md-6 mb-3';
-              const cardDiv = document.createElement('div');
-              cardDiv.className = 'card h-100';
-              const cardBody = document.createElement('div');
-              cardBody.className = 'card-body';
-              const title = document.createElement('h5');
-              title.className = 'card-title';
-              title.textContent = rec[0];
-              cardBody.appendChild(title);
-              if (rec[1] && rec[1].length > 0) {
-                  const listGroup = document.createElement('ul');
-                  listGroup.className = 'list-group list-group-flush';
-                  rec[1].forEach(product => {
-                      const item = document.createElement('li');
-                      item.className = 'list-group-item';
-                      let ingredients = product.Ingredients.replace(/[^a-zA-Z0-9\s,]/g, "");
-                      item.innerHTML = `<strong>${product.Brand} - ${product.Name}</strong><br>
-                                        Price: $${product.Price}<br>
-                                        Ingredients: ${ingredients}`;
-                      listGroup.appendChild(item);
-                  });
-                  cardDiv.appendChild(listGroup);
-              } else {
-                  const noProd = document.createElement('p');
-                  noProd.className = 'card-text';
-                  noProd.textContent = 'No products available for this condition.';
-                  cardBody.appendChild(noProd);
-              }
-              cardDiv.appendChild(cardBody);
-              colDiv.appendChild(cardDiv);
-              recommendationsContainer.appendChild(colDiv);
-          });
-      } else {
-          recommendationsContainer.innerHTML = '<p>No recommendations available.</p>';
-      }
-      
-      // Display Annotated Image if conditions exist
-      if (jsonData.classes && jsonData.classes.length > 0) {
-          annotatedImage.src = "/static/annotations_0.jpg";
-          annotatedImage.style.display = 'block';
-      } else {
-          annotatedImage.style.display = 'none';
-      }
-      resultsSection.style.display = 'block';
-  }
+        fetch("/predict", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingSpinner.style.display = "none";
+            renderResults(data);
+        })
+        .catch(error => {
+            loadingSpinner.style.display = "none";
+            alert("⚠️ An error occurred. Please try again.");
+        });
+    });
+
+    function renderResults(data) {
+        resultsSection.style.display = "block";
+        conditionsList.innerHTML = "";
+        recommendationsContainer.innerHTML = "";
+        aiAnalysis.textContent = data.ai_analysis || "No AI insights available.";
+
+        data.classes.forEach(condition => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = condition;
+            conditionsList.appendChild(li);
+        });
+
+        data.recommendations.forEach(rec => {
+            recommendationsContainer.innerHTML += `
+              <div class="recommendation-card">
+                <h3>${rec.condition}</h3>
+                ${rec.products.map(p => `<p><strong>${p.Brand} - ${p.Name}</strong><br>Price: ₹${p.Price}<br>Ingredients: ${p.Ingredients}</p>`).join("")}
+              </div>`;
+        });
+
+        if (data.annotated_image) {
+            annotatedImage.src = data.annotated_image;
+            annotatedImage.style.display = "block";
+        }
+    }
+});
 </script>
+
 {% endblock %}

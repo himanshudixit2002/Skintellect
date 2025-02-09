@@ -5,19 +5,32 @@ import cv2
 import pandas as pd
 import requests
 import traceback
-
+import google.generativeai as genai
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from roboflow import Roboflow
 import supervision as sv
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
+import dateparser
+from transformers import pipeline
+from werkzeug.utils import secure_filename
+
+
+# Load Model
+rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
+project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
+model_skin = project_skin.version(2).model
+CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", api_key=os.environ["OILINESS_API_KEY"])
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
 
 # Load environment variables from .env file
 load_dotenv()
-GEMINIE_API_KEY = os.getenv("GEMINIE_API_KEY")
-if not GEMINIE_API_KEY:
-    raise Exception("GEMINIE_API_KEY not set. Please add it to your .env file.")
+GEMINI_API_KEY = os.getenv("GEMINIE_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
+if not GEMINI_API_KEY:
+    raise Exception("GEMINI_API_KEY not set. Please add it to your .env file.")
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -145,7 +158,7 @@ def delete_appointment(appointment_id):
 # Chatbot Endpoint
 # ---------------------------
 # Route to handle chatbot requests
-import dateparser
+# Initialize the summarizer globally to avoid re-loading it on every request.
 
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
@@ -187,7 +200,7 @@ def chatbot():
     if conversation_state.get("awaiting_reason"):
         reason = user_input
         user = get_user(session.get("username"))
-        survey_data = dict(get_survey_response(user["id"]))  # ✅ Convert Row to dictionary
+        survey_data = dict(get_survey_response(user["id"]))  # Convert Row to dictionary
 
         if not user or not survey_data:
             return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
@@ -198,7 +211,7 @@ def chatbot():
             email=user["username"],
             date=conversation_state["date"],
             skin=survey_data["skin_type"],
-            phone=survey_data.get("phone", ""),  # ✅ Now this works
+            phone=survey_data.get("phone", ""),
             age=survey_data["age"],
             address=reason,
             status=False,
@@ -224,7 +237,7 @@ def chatbot():
             "type": "appointment_flow"
         })
 
-    # Default response from Gemini AI
+    # Default response from Gemini AI for other queries
     payload = {"contents": [{"parts": [{"text": user_input}]}]}
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
     headers = {"Content-Type": "application/json"}
@@ -234,6 +247,13 @@ def chatbot():
         response.raise_for_status()
         response_json = response.json()
         bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+
+        # Use transformer summarization if the answer is too long (e.g., more than 50 words)
+        word_count = len(bot_reply.split())
+        if bot_reply and word_count > 50:
+            summarized = summarizer(bot_reply, max_length=50, min_length=25, do_sample=False)[0]['summary_text']
+            bot_reply = summarized
+
 
         if not bot_reply:
             return jsonify({"botReply": "I'm having trouble understanding. Could you rephrase that?", "type": "clarification_request"})
@@ -274,7 +294,7 @@ def generate_skincare_routine(user_details):
     4. Step 4  
     5. Step 5  
     6. Step 6  
-    7. Step 7  
+    7. Step 7   
 
     🌙 **Night Routine**  
     1. Step 1  
@@ -288,7 +308,7 @@ def generate_skincare_routine(user_details):
     Ensure that:
     - **Each step is numbered properly**.
     - **Use bold headings** without unnecessary asterisks (`**`).
-    - **Provide exactly 10 steps per routine**.
+    - **Provide exactly 7 steps per routine**.
     - **Each step should be actionable and easy to follow**.
     """
 
@@ -309,7 +329,7 @@ def generate_skincare_routine(user_details):
     # Function to call the Gemini API
     def call_gemini_api(prompt_text):
         headers = {"Content-Type": "application/json"}
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINIE_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt_text}]}]})
         if response.status_code == 200:
             data = response.json()
@@ -456,8 +476,8 @@ def survey():
         skincare_routine = request.form["skincare_routine"]
         stress_level = request.form["stress_level"]
         insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count,
-                               first_concern, cosmetics_usage, skin_reaction, skin_type,
-                               medications, skincare_routine, stress_level)
+                                first_concern, cosmetics_usage, skin_reaction, skin_type,
+                                medications, skincare_routine, stress_level)
         return redirect(url_for("profile"))
     return render_template("survey.html", name=session.get("name", ""), age=session.get("age", ""))
 
@@ -538,15 +558,8 @@ def face_analysis():
 # AI Skin Analysis & Product Recommendation
 # ---------------------------
 # Initialize the Roboflow skin detection model
-rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
-project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
-model_skin = project_skin.version(2).model
-
-# Initialize the oiliness detection model
-CLIENT = InferenceHTTPClient(
-    api_url="https://detect.roboflow.com",
-    api_key=os.environ["OILINESS_API_KEY"]
-)
+UPLOAD_FOLDER = "static/uploads"
+ANNOTATIONS_FOLDER = "static/annotations"
 # Mapping to convert oiliness model class names if needed
 class_mapping = {
     "Jenis Kulit Wajah - v6 2023-06-17 11-53am": "oily skin",
@@ -556,57 +569,162 @@ class_mapping = {
 def recommend_products_based_on_classes(classes):
     recommendations = []
     df_columns_lower = [col.lower() for col in df.columns]
+    USD_TO_INR = 83  # ✅ Currency conversion rate (update as needed)
+
     for skin_condition in classes:
         condition_lower = skin_condition.lower()
         if condition_lower in df_columns_lower:
             original_column = df.columns[df_columns_lower.index(condition_lower)]
+            
+            # ✅ Filter relevant products
             filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]]
+
+            # ✅ Convert Price to INR (only if it's a valid number)
+            def convert_price(price):
+                try:
+                    return round(float(price) * USD_TO_INR, 2)  # Convert to INR with 2 decimal places
+                except ValueError:
+                    return "N/A"  # Handle missing/invalid price
+
+            filtered["Price"] = filtered["Price"].apply(convert_price)
+
+            # ✅ Process Ingredients (limit to first 5 items)
             filtered["Ingredients"] = filtered["Ingredients"].apply(lambda x: ", ".join(x.split(", ")[:5]))
+
             products = filtered.head(5).to_dict(orient="records")
-            recommendations.append((skin_condition, products))
+        else:
+            products = []
+
+        # ✅ Get AI-generated skincare insights (optional)
+        ai_analysis = get_gemini_recommendations([skin_condition])
+
+        # ✅ Store product details and AI analysis
+        recommendations.append({
+            "condition": skin_condition,
+            "products": products, 
+            "ai_analysis": ai_analysis  
+        })
+
     return recommendations
 
-@app.route("/predict", methods=["GET", "POST"])
+
+
+def get_gemini_recommendations(skin_conditions):
+    """
+    Uses Gemini Free API + Transformer-based summarization to generate structured skincare recommendations.
+    """
+    if not skin_conditions:
+        return "No skin conditions detected for analysis."
+
+    prompt = f"""
+    You are an AI skincare expert. A user uploaded an image, and the detected skin conditions are: {', '.join(skin_conditions)}.
+
+    - Explain these skin conditions in simple terms.
+    - List the best skincare ingredients for these conditions.
+    - Provide a basic morning and night skincare routine.
+    - Suggest 3 skincare products with pros & cons.
+    - Give 2 lifestyle tips for better skin health.
+
+    Keep the response concise and well-structured.
+    """
+
+    try:
+        # 🔹 Generate AI recommendations using Gemini API
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+
+        if response and response.text:
+            raw_text = response.text.strip()
+        else:
+            return "AI analysis failed."
+
+        # 🔹 Summarize the AI-generated response using Transformer model
+        summary = summarizer(raw_text, max_length=200, min_length=80, do_sample=False)[0]["summary_text"]
+        
+        return summary
+
+    except Exception as e:
+        return f"❌ AI error: {str(e)}"
+# (Assume your recommend_products_based_on_classes() function is defined as needed.)
+
+# ---------------------------
+# /predict Endpoint
+# ---------------------------
+@app.route("/predict", methods=["POST", "GET"])
 def predict():
+    """Handles AI Skin Analysis, detection, and AI-enhanced recommendations."""
     if request.method == "POST":
         try:
+            # Ensure image is uploaded
+            if "image" not in request.files:
+                return jsonify({"error": "No image uploaded"}), 400
+
             image_file = request.files["image"]
-            image_filename = str(uuid.uuid4()) + ".jpg"
-            image_path = os.path.join("static", image_filename)
+
+            # Validate file type (Only accept JPG, PNG)
+            ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+            if not ('.' in image_file.filename and image_file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS):
+                return jsonify({"error": "Invalid file type. Only JPG and PNG are allowed."}), 400
+
+            # Ensure uploads folder exists
+            UPLOAD_FOLDER = "static/uploads"
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            image_filename = secure_filename(str(uuid.uuid4()) + ".jpg")
+            image_path = os.path.join(UPLOAD_FOLDER, image_filename)
             image_file.save(image_path)
+
+            # Step 1: Run Face Analysis Model (Detect Skin Conditions)
             unique_classes = set()
-            # Skin detection using Roboflow
             skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
             skin_labels = [pred["class"] for pred in skin_result.get("predictions", [])]
             unique_classes.update(skin_labels)
-            # Oiliness detection with custom configuration
+
+            # Step 2: Run Oiliness Detection
             custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
             with CLIENT.use_configuration(custom_configuration):
                 oiliness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
+
             if not oiliness_result.get("predictions"):
                 unique_classes.add("dryness")
             else:
                 oiliness_classes = [class_mapping.get(pred["class"], pred["class"]) for pred in oiliness_result.get("predictions", []) if pred.get("confidence", 0) >= 0.3]
                 unique_classes.update(oiliness_classes)
-            # Annotate image using Supervision
+
+            # Step 3: Annotate Image using Supervision
+            ANNOTATIONS_FOLDER = "static/annotations"
+            os.makedirs(ANNOTATIONS_FOLDER, exist_ok=True)
+            annotated_filename = f"annotations_{image_filename}"
+            annotated_image_path = os.path.join(ANNOTATIONS_FOLDER, annotated_filename)
             image = cv2.imread(image_path)
             detections = sv.Detections.from_inference(skin_result)
             box_annotator = sv.BoxAnnotator()
             label_annotator = sv.LabelAnnotator()
             annotated_image = box_annotator.annotate(scene=image, detections=detections)
             annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
-            cv2.imwrite(os.path.join("static", "annotations_0.jpg"), annotated_image)
-            # Get product recommendations
+            cv2.imwrite(annotated_image_path, annotated_image)
+
+            # Step 4: AI-Generated Recommendations using Gemini Free API & LangChain
+            ai_analysis_text = get_gemini_recommendations(unique_classes)
+
+            # Step 5: Generate Product Recommendations from Dataset
             recommended_products = recommend_products_based_on_classes(list(unique_classes))
+
             prediction_data = {
                 "classes": list(unique_classes),
-                "recommendations": recommended_products
+                "ai_analysis": ai_analysis_text,
+                "recommendations": recommended_products,
+                "annotated_image": f"/{annotated_image_path}"
             }
-            return render_template("face_analysis.html", data=prediction_data)
+
+            return jsonify(prediction_data)
+
         except Exception as e:
             traceback.print_exc()
-            return "An error occurred during analysis.", 500
+            return jsonify({"error": "An error occurred during analysis.", "details": str(e)}), 500
+
+    # For GET requests, load the analysis page
     return render_template("face_analysis.html", data={})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
