@@ -4,7 +4,7 @@
 <style>
   /* Global Styling */
   body {
-      background-color: #f7fbff;
+      background-color: #f7fbff; /* Light blue background */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .container-main {
@@ -58,22 +58,6 @@
       transform: scale(1.05);
   }
 
-  /* Loader Animation */
-  .loader {
-      display: none;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007BFF;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 10px auto;
-  }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
-
   /* Results Section */
   .results-section {
       margin-top: 30px;
@@ -90,6 +74,14 @@
       color: #007BFF;
       font-weight: bold;
   }
+  .list-group-item {
+      border: none;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+  }
+  .list-group-item:last-child {
+      border-bottom: none;
+  }
 
   /* Annotated Image Styling */
   .annotated-img {
@@ -100,7 +92,16 @@
       transition: opacity 0.5s;
   }
 
-  /* Recommendation Styling */
+  /* Animations */
+  .fade-in {
+      animation: fadeIn 0.8s ease-in;
+  }
+  @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+  }
+
+  /* Recommendation Card Styling */
   .recommendation-card {
       margin-bottom: 15px;
       padding: 10px;
@@ -125,7 +126,7 @@
       </div>
       <div class="text-center">
         <button class="btn-blue" type="submit">Analyze Skin</button>
-        <div class="loader" id="loadingSpinner"></div>
+        <div class="spinner" id="loadingSpinner"></div>
       </div>
     </form>
 
@@ -136,12 +137,36 @@
         <ul id="conditionsList" class="list-group"></ul>
       </div>
       <div class="card-custom fade-in">
-        <h2 class="card-title">💡 Skincare Tips</h2>
+        <h2 class="card-title">💡 AI Skincare Tips</h2>
         <p id="aiAnalysis"></p>
       </div>
       <div class="card-custom fade-in">
         <h2 class="card-title">🛍️ Recommended Products</h2>
-        <div id="recommendationsContainer"></div>
+        <div id="recommendationsContainer">
+          {% if data and data.recommendations %}
+            {% for rec in data.recommendations %}
+              <div class="recommendation-card">
+                <h3>{{ rec.condition }}</h3>
+                {% if rec.products and rec.products|length > 0 %}
+                  <h4>Recommended Products:</h4>
+                  <ul>
+                    {% for product in rec.products %}
+                      <li>
+                        <strong>{{ product.Brand }} - {{ product.Name }}</strong><br>
+                        Price: ₹{{ product.Price }}<br>
+                        Ingredients: {{ product.Ingredients }}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p>No products available for this condition.</p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No recommendations available.</p>
+          {% endif %}
+        </div>
       </div>
       <div class="card-custom fade-in">
         <h2 class="card-title">🔍 AI Analyzed Image</h2>
@@ -164,8 +189,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const aiAnalysis = document.getElementById("aiAnalysis");
     const annotatedImage = document.getElementById("annotatedImage");
 
+    // Open file input on click
     uploadBox.addEventListener("click", () => fileInput.click());
 
+    // Validate file size (Max: 2MB)
     fileInput.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
@@ -181,52 +208,79 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Form submission and AJAX call with loader
     uploadForm.addEventListener("submit", function (event) {
         event.preventDefault();
         const formData = new FormData();
         formData.append("image", fileInput.files[0]);
 
+        // Show loading spinner
         loadingSpinner.style.display = "block";
 
         fetch("/predict", {
             method: "POST",
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Server responded with an error: " + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             loadingSpinner.style.display = "none";
             renderResults(data);
         })
         .catch(error => {
             loadingSpinner.style.display = "none";
+            console.error("Fetch error:", error);
             alert("⚠️ An error occurred. Please try again.");
         });
     });
 
+    // Render Results Function
     function renderResults(data) {
         resultsSection.style.display = "block";
         conditionsList.innerHTML = "";
         recommendationsContainer.innerHTML = "";
         aiAnalysis.textContent = data.ai_analysis || "No AI insights available.";
 
-        data.classes.forEach(condition => {
-            const li = document.createElement("li");
-            li.className = "list-group-item";
-            li.textContent = condition;
-            conditionsList.appendChild(li);
-        });
+        if (data.classes && data.classes.length > 0) {
+            data.classes.forEach(condition => {
+                const li = document.createElement("li");
+                li.className = "list-group-item";
+                li.textContent = condition;
+                conditionsList.appendChild(li);
+            });
+        } else {
+            conditionsList.innerHTML = "<li class='list-group-item'>No conditions detected.</li>";
+        }
 
-        data.recommendations.forEach(rec => {
-            recommendationsContainer.innerHTML += `
-              <div class="recommendation-card">
-                <h3>${rec.condition}</h3>
-                ${rec.products.map(p => `<p><strong>${p.Brand} - ${p.Name}</strong><br>Price: ₹${p.Price}<br>Ingredients: ${p.Ingredients}</p>`).join("")}
-              </div>`;
-        });
+        if (data.recommendations && data.recommendations.length > 0) {
+            let recHTML = "";
+            data.recommendations.forEach(rec => {
+                recHTML += `
+                  <div class="recommendation-card">
+                    <h3>${rec.condition}</h3>
+                    ${ (rec.products && rec.products.length > 0) ? `
+                      <h4>Recommended Products:</h4>
+                      <ul>
+                        ${ rec.products.map(p => `<li><strong>${p.Brand} - ${p.Name}</strong><br>Price: ₹${p.Price}<br>Ingredients: ${p.Ingredients}</li>`).join("") }
+                      </ul>
+                    ` : `<p>No products available for this condition.</p>` }
+                  </div>
+                `;
+            });
+            recommendationsContainer.innerHTML = recHTML;
+        } else {
+            recommendationsContainer.innerHTML = "<p>No recommendations available.</p>";
+        }
 
         if (data.annotated_image) {
             annotatedImage.src = data.annotated_image;
             annotatedImage.style.display = "block";
+        } else {
+            annotatedImage.style.display = "none";
         }
     }
 });
