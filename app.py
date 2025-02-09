@@ -28,7 +28,7 @@ summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
 # Load environment variables from .env file
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINIE_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 if not GEMINI_API_KEY:
     raise Exception("GEMINI_API_KEY not set. Please add it to your .env file.")
