@@ -169,7 +169,7 @@ def chatbot():
     if not user_input:
         return jsonify({"error": "No user input provided."}), 400
 
-    gemini_api_key = os.environ.get("GEMINIE_API_KEY")
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if not gemini_api_key:
         return jsonify({"error": "Gemini API key not configured."}), 500
 
