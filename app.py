@@ -669,6 +669,9 @@ def register():
         session["age"] = age
         return redirect(url_for("login"))
     return render_template("register.html")
+@app.route("/login.html")
+def login_html_redirect():
+    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
