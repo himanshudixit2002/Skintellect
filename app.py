@@ -14,8 +14,13 @@ import supervision as sv
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 import dateparser
 from werkzeug.utils import secure_filename
+<<<<<<< HEAD
 from langchain import PromptTemplate
 import markdown
+=======
+from langchain_core.prompts import PromptTemplate
+
+>>>>>>> 30ed6d904e29d793d18a015b592a3284e846c06a
 
 # =============================================================================
 # Environment & API Configuration
