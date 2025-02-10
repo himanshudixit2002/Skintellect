@@ -199,15 +199,15 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => {
             loadingSpinner.style.display = "none";
-            alert("⚠️ An error occurred. Please try again.");
+            alert("⚠️ Face not detected. Please upload a clearer image.");
         });
     });
 
     function renderResults(data) {
         resultsSection.style.display = "block";
-        conditionsList.innerHTML = "";
-        recommendationsContainer.innerHTML = "";
-        aiAnalysis.textContent = data.ai_analysis || "No AI insights available.";
+        conditionsList.innerHTML = "........";
+        recommendationsContainer.innerHTML = ".........";
+        aiAnalysis.textContent = data.ai_analysis || "........";
 
         data.classes.forEach(condition => {
             const li = document.createElement("li");

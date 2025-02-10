@@ -15,6 +15,7 @@ from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 import dateparser
 from werkzeug.utils import secure_filename
 from langchain import PromptTemplate
+import markdown
 
 # =============================================================================
 # Environment & API Configuration
@@ -57,7 +58,43 @@ CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com",
 # =============================================================================
 # Helper Functions
 # =============================================================================
+chat_prompt_template = PromptTemplate(
+    input_variables=["user_input"],
+    template="""
+You are a helpful, friendly, and engaging AI assistant specialized in skincare advice.
+Respond in a clear and structured way using Markdown. Use emojis and ask follow-up questions to keep the conversation interactive.
 
+**User's Message:**
+{user_input}
+
+**Response:**
+"""
+)
+
+# ---------------------------------------------------------------------------
+# Helper Function: Generate Gemini Response
+# ---------------------------------------------------------------------------
+def get_gemini_response(user_input):
+    """
+    Generates an AI response using the Gemini API with the LangChain prompt.
+    Converts the resulting Markdown into HTML for proper display.
+    """
+    # Format the prompt using LangChain
+    formatted_prompt = chat_prompt_template.format(user_input=user_input)
+    
+    # Call Gemini API using google.generativeai's GenerativeModel (adjust as needed)
+    response = genai.GenerativeModel("gemini-1.5-flash").generate_content(formatted_prompt)
+    
+    if response and response.text:
+        # Convert the AI's Markdown output to HTML
+        formatted_response = markdown.markdown(response.text.strip())
+        return formatted_response
+    else:
+        return "⚠️ AI response not available."
+
+# ---------------------------------------------------------------------------
+# Chatbot Endpoint (Single definition)
+# ---------------------------------------------------------------------------
 def langchain_summarize(text, max_length, min_length):
     """
     Summarize the provided text using LangChain prompt templating and the Gemini API.
@@ -85,6 +122,7 @@ def langchain_summarize(text, max_length, min_length):
     - If the issue is serious, **politely suggest seeing a dermatologist.**  
 
     Go ahead and drop some **amazing** skincare tips! ✨  
+    Please strictly format your response using Markdown (use '#' for headings, '-' for lists, '**' for bold, etc.), and ensure it is well-structured.
     """
    
     prompt = PromptTemplate(
@@ -236,9 +274,6 @@ def delete_appointment(appointment_id):
 # -----------------------------------------------------------------------------
 
 def get_gemini_recommendations(skin_conditions):
-    """
-    Generate structured skincare recommendations using the Gemini API.
-    """
     if not skin_conditions:
         return "No skin conditions detected for analysis."
 
@@ -252,16 +287,28 @@ def get_gemini_recommendations(skin_conditions):
     - Give 2 lifestyle tips for better skin health.
 
     Keep the response concise and well-structured.
+    Please strictly format your response using Markdown (use '#' for headings, '-' for lists, '**' for bold, etc.), and ensure it is well-structured.
     """
-    try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip() if response and response.text else "AI analysis failed."
-        # Summarize the raw response using LangChain summarization
-        summary = langchain_summarize(raw_text, max_length=200, min_length=80)
-        return summary
-    except Exception as e:
-        return f"❌ AI error: {str(e)}"
+
+    headers = {"Content-Type": "application/json"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+    
+    print("Gemini API response status:", response.status_code)  # Debug log
+    print("Gemini API raw response:", response.json())  # Debug log
+
+    if response.status_code == 200:
+        data = response.json()
+        summary_text = (
+            data.get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
+        )
+        return summary_text.strip()
+    else:
+        return "Failed to summarize text."
+
 
 def recommend_products_based_on_classes(classes):
     """
@@ -338,6 +385,7 @@ def generate_skincare_routine(user_details):
     - Use bold headings without unnecessary asterisks.
     - Provide exactly 7 steps per routine.
     - Each step should be actionable and easy to follow.
+    Please strictly format your response using Markdown (use '#' for headings, '-' for lists, '**' for bold, etc.), and ensure it is well-structured.
     """
     prompt = PromptTemplate(
         input_variables=["age", "gender", "skin_type", "concerns", "acne_frequency", "skincare_routine", "stress_level"],
@@ -479,12 +527,12 @@ def chatbot():
         session["conversation_history"] = []
     conversation_history = session["conversation_history"]
 
-    # (Keep your existing appointment scheduling flow logic here)
-    # For example, if using conversation_state for appointment flows:
+    # Initialize conversation_state in session if not present
     if "conversation_state" not in session:
         session["conversation_state"] = {}
     conversation_state = session["conversation_state"]
 
+    # Appointment scheduling flow (unchanged)
     if conversation_state.get("awaiting_date"):
         parsed_date = dateparser.parse(user_input)
         if parsed_date:
@@ -492,7 +540,6 @@ def chatbot():
             conversation_state["awaiting_date"] = False
             conversation_state["awaiting_reason"] = True
             session.modified = True
-            # Also store this exchange in the conversation history
             conversation_history.append({"role": "user", "text": user_input})
             conversation_history.append({"role": "assistant", "text": f"Great! Your appointment is set for {conversation_state['date']}. Now, please describe the reason for your appointment."})
             session["conversation_history"] = conversation_history
@@ -545,10 +592,11 @@ def chatbot():
             "type": "appointment_flow"
         })
 
-    # For general queries, build the prompt including conversation history
-    # Append the new user message to history
+    # General queries – update conversation history and build the prompt
     conversation_history.append({"role": "user", "text": user_input})
     prompt = build_conversation_prompt(conversation_history, user_input)
+    # Append enhanced instructions to encourage interactive, engaging responses:
+    prompt += "\n\nPlease respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis, and ask follow-up questions when appropriate."
 
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
@@ -568,7 +616,7 @@ def chatbot():
         # Ensure the answer is complete
         bot_reply = complete_answer_if_incomplete(bot_reply)
 
-        # Append assistant reply to conversation history and update the session
+        # Append assistant reply to conversation history and update session
         conversation_history.append({"role": "assistant", "text": bot_reply})
         session["conversation_history"] = conversation_history
 
@@ -837,6 +885,12 @@ def predict():
 
     # For GET requests, render the analysis page
     return render_template("face_analysis.html", data={})
+# =============================================================================
+# New Dedicated Chat Route for Chatbot UI
+# =============================================================================
+@app.route("/chat")
+def chat():
+    return render_template("chatbot.html")
 
 # =============================================================================
 # Main Entry Point
