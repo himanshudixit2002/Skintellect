@@ -1,6 +1,6 @@
 # Skintellect 🧬✨
 
-![Project Banner](static/assets/bg.webp)
+![Project Banner](static/assets/bg5.webp)
 
 A intelligent skincare analysis and recommendation system combining computer vision with skincare science.
 
