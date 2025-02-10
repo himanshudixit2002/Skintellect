@@ -48,9 +48,6 @@
         <a href="{{ url_for('predict') }}" class="block px-4 py-2 hover:bg-gray-700">Face Analysis</a>
         <a href="{{ url_for('userappoint') }}" class="block px-4 py-2 hover:bg-gray-700">My Appointments</a>
         <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-700">Profile</a>
-        <!-- Dedicated Chatbot Button in Mobile Dropdown -->
-        <a href="{{ url_for('chat') }}" id="dropdown-chat-button" class="block px-4 py-2 hover:bg-gray-700">AI Advisor</a>
-        <!-- Conditional Login/Logout Button for Mobile -->
         {% if session.get('username') %}
           <a href="{{ url_for('logout') }}" class="block px-4 py-2 mt-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300">Logout</a>
         {% else %}
@@ -71,8 +68,6 @@
             Logout
           </a>
         </li>
-        <!-- Dedicated Chatbot Button in Navbar -->
-        <li><a href="{{ url_for('chat') }}" id="nav-chat-button" class="block md:inline-block hover:text-gray-400">AI Advisor</a></li>
       {% else %}
         <li>
           <a href="{{ url_for('login') }}" class="block md:inline-block bg-green-500 px-3 py-1 rounded hover:bg-green-600 transition duration-300">
@@ -161,8 +156,6 @@
           <a href="{{ url_for('bookappointment') }}" class="text-sm hover:text-emerald-300">Consultation</a>
           <a href="{{ url_for('profile') }}" class="text-sm hover:text-emerald-300">Profile</a>
           <a href="{{ url_for('userappoint') }}" class="text-sm hover:text-emerald-300">Appointments</a>
-          <!-- Dedicated Chatbot Button in Footer -->
-          <a href="#" id="footer-chat-button" class="text-sm hover:text-emerald-300">AI Advisor</a>
         </div>
       </div>
 

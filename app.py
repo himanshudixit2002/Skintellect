@@ -17,7 +17,6 @@ from werkzeug.utils import secure_filename
 import markdown
 from langchain_core.prompts import PromptTemplate
 
-
 # =============================================================================
 # Environment & API Configuration
 # =============================================================================
@@ -512,6 +511,7 @@ def complete_answer_if_incomplete(answer):
 # ------------------------------------------------------------------------------
 # Chatbot Endpoint (Updated to Maintain Conversation History)
 # ------------------------------------------------------------------------------
+
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
     data = request.get_json()
@@ -889,13 +889,6 @@ def predict():
 
     # For GET requests, render the analysis page
     return render_template("face_analysis.html", data={})
-# =============================================================================
-# New Dedicated Chat Route for Chatbot UI
-# =============================================================================
-@app.route("/chat")
-def chat():
-    return render_template("chatbot.html")
-
 # =============================================================================
 # Main Entry Point
 # =============================================================================
