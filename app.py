@@ -13,41 +13,108 @@ from roboflow import Roboflow
 import supervision as sv
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 import dateparser
-from transformers import pipeline
 from werkzeug.utils import secure_filename
+from langchain import PromptTemplate
 
-
-# Load Model
-rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
-project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
-model_skin = project_skin.version(2).model
-CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", api_key=os.environ["OILINESS_API_KEY"])
-summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6") 
-
-
+# =============================================================================
+# Environment & API Configuration
+# =============================================================================
 
 # Load environment variables from .env file
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
 if not GEMINI_API_KEY:
     raise Exception("GEMINI_API_KEY not set. Please add it to your .env file.")
 
-# Initialize Flask application
+# Configure Gemini API for google.generativeai
+genai.configure(api_key=GEMINI_API_KEY)
+
+# =============================================================================
+# Initialize Flask Application
+# =============================================================================
+
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = os.getenv("FLASK_ENV") == "development"
-app.secret_key = os.environ["SECRET_KEY"]  
-DATABASE = os.environ["DATABASE_URL"]  
+app.secret_key = os.environ["SECRET_KEY"]
+DATABASE = os.environ["DATABASE_URL"]
 
-# Load the skincare products dataset (ensure the path is correct)
+# =============================================================================
+# Load Data & Models
+# =============================================================================
+
+# Load the skincare products dataset
 df = pd.read_csv(os.path.join("dataset", "updated_skincare_products.csv"))
 
-# ---------------------------
+# Initialize Roboflow skin detection model
+rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
+project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
+model_skin = project_skin.version(2).model
+
+# Initialize Oiliness Detection Client
+CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", 
+                             api_key=os.environ["OILINESS_API_KEY"])
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+def langchain_summarize(text, max_length, min_length):
+    """
+    Summarize the provided text using LangChain prompt templating and the Gemini API.
+    """
+    prompt_template = """
+    Hey! You're a super-friendly **skincare expert** who gives **simple, practical, and fun** advice. 
+    Your goal is to make skincare feel **easy, relatable, and stress-free**. Keep your answers **casual, engaging, and beginner-friendly**—like you're chatting with a friend! 😊
+
+    Here’s what we need help with:
+
+   🧴 **Skin Type:** {skin_type}  
+   🌿 **Concerns:** {concerns}  
+   📆 **Current Routine:** {skincare_routine}  
+   🔎 **Main Issue:** {main_issue}  
+    Now, based on this, **give clear, practical skincare advice** that includes:  
+    - A **simple morning & night routine** (don't overcomplicate it!)  
+    - Best **ingredients to look for** (and what to avoid)  
+    - Some **product recommendations** (if needed)  
+    - **Fun, relatable skincare tips** (keep it engaging!)  
+    - If needed, **a myth-busting fact** about skincare 🚀  
+
+    💡 **Important:**  
+    - Keep it **short, casual, and easy to follow.** No jargon, no fancy science—just **real** advice!  
+    - Talk **like a human, not a robot.** Add some **warmth and personality!**  
+    - If the issue is serious, **politely suggest seeing a dermatologist.**  
+
+    Go ahead and drop some **amazing** skincare tips! ✨  
+    """
+   
+    prompt = PromptTemplate(
+        input_variables=["text", "max_length", "min_length"],
+        template=prompt_template
+    ).format(text=text, max_length=max_length, min_length=min_length)
+    
+    headers = {"Content-Type": "application/json"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+    
+    if response.status_code == 200:
+        data = response.json()
+        summary_text = (
+            data.get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
+        )
+        return summary_text.strip()
+    else:
+        return "Failed to summarize text."
+
+# -----------------------------------------------------------------------------
 # Database Functions
-# ---------------------------
+# -----------------------------------------------------------------------------
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row  # enable accessing columns by name
+    conn.row_factory = sqlite3.Row  # Enable accessing columns by name
     return conn
 
 def create_tables():
@@ -97,7 +164,17 @@ def create_tables():
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            message TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )''')
+
         connection.commit()
+
 create_tables()
 
 def insert_user(username, password):
@@ -107,23 +184,25 @@ def insert_user(username, password):
 
 def get_user(username):
     with get_db_connection() as conn:
-        user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
-    return user
+        return conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
 
-def insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level):
+def insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count,
+                           first_concern, cosmetics_usage, skin_reaction, skin_type, medications,
+                           skincare_routine, stress_level):
     with get_db_connection() as conn:
         conn.execute(
             """INSERT INTO survey_responses 
-            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
+            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetic_usage,
+             skin_reaction, skin_type, medications, skincare_routine, stress_level)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern, cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
+            (user_id, name, age, gender, concerns, acne_frequency, comedones_count, first_concern,
+             cosmetics_usage, skin_reaction, skin_type, medications, skincare_routine, stress_level)
         )
         conn.commit()
 
 def get_survey_response(user_id):
     with get_db_connection() as conn:
-        response = conn.execute("SELECT * FROM survey_responses WHERE user_id = ?", (user_id,)).fetchone()
-    return response
+        return conn.execute("SELECT * FROM survey_responses WHERE user_id = ?", (user_id,)).fetchone()
 
 def insert_appointment_data(name, email, date, skin, phone, age, address, status, username):
     with get_db_connection() as conn:
@@ -134,15 +213,13 @@ def insert_appointment_data(name, email, date, skin, phone, age, address, status
             (name, email, date, skin, phone, age, address, status, username)
         )
         conn.commit()
-        return cursor.lastrowid  # Return the ID of the newly created appointment
+        return cursor.lastrowid
 
 def find_appointments(username):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         appointments = cursor.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
         return [dict(row) for row in appointments]
-
-
 
 def update_appointment_status(appointment_id):
     with get_db_connection() as conn:
@@ -151,130 +228,80 @@ def update_appointment_status(appointment_id):
 
 def delete_appointment(appointment_id):
     with get_db_connection() as conn:
-        conn.execute("DELETE FROM appointment WHERE id = ?", (int(appointment_id,)))
+        conn.execute("DELETE FROM appointment WHERE id = ?", (int(appointment_id),))
         conn.commit()
 
+# -----------------------------------------------------------------------------
+# AI Helper Functions
+# -----------------------------------------------------------------------------
 
-# ---------------------------
-# Chatbot Endpoint
-# ---------------------------
-# Route to handle chatbot requests
-# Initialize the summarizer globally to avoid re-loading it on every request.
+def get_gemini_recommendations(skin_conditions):
+    """
+    Generate structured skincare recommendations using the Gemini API.
+    """
+    if not skin_conditions:
+        return "No skin conditions detected for analysis."
 
-@app.route("/chatbot", methods=["POST"])
-def chatbot():
-    data = request.get_json()
-    user_input = data.get("userInput")
+    prompt = f"""
+    You are an AI skincare expert. A user uploaded an image, and the detected skin conditions are: {', '.join(skin_conditions)}.
 
-    if not user_input:
-        return jsonify({"error": "No user input provided."}), 400
+    - Explain these skin conditions in simple terms.
+    - List the best skincare ingredients for these conditions.
+    - Provide a basic morning and night skincare routine.
+    - Suggest 3 skincare products with pros & cons.
+    - Give 2 lifestyle tips for better skin health.
 
-    gemini_api_key = os.environ.get("GEMINI_API_KEY")
-    if not gemini_api_key:
-        return jsonify({"error": "Gemini API key not configured."}), 500
-
-    # Use session-based conversation tracking
-    if "conversation_state" not in session:
-        session["conversation_state"] = {}
-
-    conversation_state = session["conversation_state"]
-
-    # If waiting for a date input
-    if conversation_state.get("awaiting_date"):
-        parsed_date = dateparser.parse(user_input)  # Convert natural language dates
-        if parsed_date:
-            conversation_state["date"] = parsed_date.strftime("%Y-%m-%d %H:%M")  # Format date
-            conversation_state["awaiting_date"] = False
-            conversation_state["awaiting_reason"] = True  # Move to the next step
-            session.modified = True
-            return jsonify({
-                "botReply": f"Great! Your appointment is set for {conversation_state['date']}. Now, please describe the reason for your appointment.",
-                "type": "appointment_flow"
-            })
-        else:
-            return jsonify({
-                "botReply": "I couldn't understand that date format. Please try again with a valid date, such as 'Next Monday at 3 PM' or '10th Feb 2025 at 2 PM'.",
-                "type": "error"
-            })
-
-    # If waiting for a reason input
-    if conversation_state.get("awaiting_reason"):
-        reason = user_input
-        user = get_user(session.get("username"))
-        survey_data = dict(get_survey_response(user["id"]))  # Convert Row to dictionary
-
-        if not user or not survey_data:
-            return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
-
-        # Create appointment
-        appointment_id = insert_appointment_data(
-            name=survey_data["name"],
-            email=user["username"],
-            date=conversation_state["date"],
-            skin=survey_data["skin_type"],
-            phone=survey_data.get("phone", ""),
-            age=survey_data["age"],
-            address=reason,
-            status=False,
-            username=user["username"]
-        )
-
-        # Reset conversation state
-        session["conversation_state"] = {}
-        session.modified = True
-
-        return jsonify({
-            "botReply": f"Your appointment has been successfully scheduled for {conversation_state['date']} with the reason: {reason}. Your reference ID is APPT-{appointment_id}.",
-            "type": "appointment_confirmation",
-            "appointmentId": appointment_id
-        })
-
-    # If user initiates an appointment
-    if "make an appointment" in user_input.lower():
-        conversation_state["awaiting_date"] = True
-        session.modified = True
-        return jsonify({
-            "botReply": "When would you like to schedule your appointment? You can type any format (e.g., 'March 10 at 3 PM', 'Tomorrow 4 PM', 'Next Monday').",
-            "type": "appointment_flow"
-        })
-
-    # Default response from Gemini AI for other queries
-    payload = {"contents": [{"parts": [{"text": user_input}]}]}
-    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
-    headers = {"Content-Type": "application/json"}
-
+    Keep the response concise and well-structured.
+    """
     try:
-        response = requests.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
-        response_json = response.json()
-        bot_reply = response_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        raw_text = response.text.strip() if response and response.text else "AI analysis failed."
+        # Summarize the raw response using LangChain summarization
+        summary = langchain_summarize(raw_text, max_length=200, min_length=80)
+        return summary
+    except Exception as e:
+        return f"❌ AI error: {str(e)}"
 
-        # Use transformer summarization if the answer is too long (e.g., more than 50 words)
-        word_count = len(bot_reply.split())
-        if bot_reply and word_count > 50:
-            summarized = summarizer(bot_reply, max_length=50, min_length=25, do_sample=False)[0]['summary_text']
-            bot_reply = summarized
+def recommend_products_based_on_classes(classes):
+    """
+    Generate product recommendations based on detected skin condition classes.
+    """
+    recommendations = []
+    df_columns_lower = [col.lower() for col in df.columns]
+    USD_TO_INR = 83  # Currency conversion rate
 
+    for skin_condition in classes:
+        condition_lower = skin_condition.lower()
+        if condition_lower in df_columns_lower:
+            original_column = df.columns[df_columns_lower.index(condition_lower)]
+            filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]]
 
-        if not bot_reply:
-            return jsonify({"botReply": "I'm having trouble understanding. Could you rephrase that?", "type": "clarification_request"})
+            def convert_price(price):
+                try:
+                    return round(float(price) * USD_TO_INR, 2)
+                except ValueError:
+                    return "N/A"
+            filtered["Price"] = filtered["Price"].apply(convert_price)
+            filtered["Ingredients"] = filtered["Ingredients"].apply(
+                lambda x: ", ".join(x.split(", ")[:5])
+            )
+            products = filtered.head(5).to_dict(orient="records")
+        else:
+            products = []
 
-        return jsonify({"botReply": bot_reply, "type": "general_response"})
-
-    except requests.exceptions.RequestException as e:
-        print("Gemini API error:", e)
-        return jsonify({"error": "Error processing request."}), 500
-
-
-import requests
-from langchain import PromptTemplate
+        ai_analysis = get_gemini_recommendations([skin_condition])
+        recommendations.append({
+            "condition": skin_condition,
+            "products": products,
+            "ai_analysis": ai_analysis
+        })
+    return recommendations
 
 def generate_skincare_routine(user_details):
     """
-    Uses LangChain to generate a detailed, structured skincare routine by calling Google Gemini API.
-    Ensures correct formatting with 10 structured steps for morning and night routines.
+    Generate a structured skincare routine based on user details using LangChain and Gemini API.
     """
-    # Define a structured prompt
     prompt_template = """
     Based on the following user skin details, generate a **concise, structured, and formatted** skincare routine:
 
@@ -307,13 +334,11 @@ def generate_skincare_routine(user_details):
     7. Step 7   
 
     Ensure that:
-    - **Each step is numbered properly**.
-    - **Use bold headings** without unnecessary asterisks (`**`).
-    - **Provide exactly 7 steps per routine**.
-    - **Each step should be actionable and easy to follow**.
+    - Each step is numbered properly.
+    - Use bold headings without unnecessary asterisks.
+    - Provide exactly 7 steps per routine.
+    - Each step should be actionable and easy to follow.
     """
-
-    # Format the prompt with user details
     prompt = PromptTemplate(
         input_variables=["age", "gender", "skin_type", "concerns", "acne_frequency", "skincare_routine", "stress_level"],
         template=prompt_template
@@ -327,7 +352,6 @@ def generate_skincare_routine(user_details):
         stress_level=user_details["stress_level"]
     )
 
-    # Function to call the Gemini API
     def call_gemini_api(prompt_text):
         headers = {"Content-Type": "application/json"}
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
@@ -338,10 +362,7 @@ def generate_skincare_routine(user_details):
         else:
             return "Failed to fetch routine from AI"
 
-    # Call Gemini API
     bot_reply = call_gemini_api(prompt)
-
-    # Split morning and night routines correctly
     if "🌙" in bot_reply:
         parts = bot_reply.split("🌙")
         morning_routine = parts[0].strip()
@@ -350,20 +371,15 @@ def generate_skincare_routine(user_details):
         routines = bot_reply.split("\n\n")
         morning_routine = routines[0].strip() if routines else "No routine found"
         night_routine = routines[1].strip() if len(routines) > 1 else "No routine found"
-
+    
     return {"morning_routine": morning_routine, "night_routine": night_routine}
-
 
 def save_skincare_routine(user_id, morning_routine, night_routine):
     with get_db_connection() as conn:
         cursor = conn.cursor()
-
-        # Check if the user already has a routine
         cursor.execute("SELECT id FROM skincare_routines WHERE user_id = ?", (user_id,))
         existing_routine = cursor.fetchone()
-
         if existing_routine:
-            # If exists, UPDATE
             cursor.execute(
                 """UPDATE skincare_routines 
                    SET morning_routine = ?, night_routine = ?, last_updated = CURRENT_TIMESTAMP 
@@ -371,15 +387,12 @@ def save_skincare_routine(user_id, morning_routine, night_routine):
                 (morning_routine, night_routine, user_id)
             )
         else:
-            # If not, INSERT a new routine
             cursor.execute(
                 """INSERT INTO skincare_routines (user_id, morning_routine, night_routine) 
                    VALUES (?, ?, ?)""",
                 (user_id, morning_routine, night_routine)
             )
-
         conn.commit()
-
 
 def get_skincare_routine(user_id):
     with get_db_connection() as conn:
@@ -388,29 +401,205 @@ def get_skincare_routine(user_id):
         routine = cursor.fetchone()
     return routine if routine else {"morning_routine": "No routine found", "night_routine": "No routine found"}
 
+# =============================================================================
+# Flask Routes
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Chatbot Endpoint
+# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Helper Function to Build Conversation Prompt with History
+# ------------------------------------------------------------------------------
+def build_conversation_prompt(history, user_input):
+    """
+    Build a prompt that includes previous conversation history and the new user input.
+    This helps the assistant generate a response in context.
+    """
+    prompt = "You are a helpful, friendly skincare assistant. Keep your tone casual and conversational.\n\n"
+    prompt += "Here is the conversation so far:\n"
+    for msg in history:
+        role = msg.get("role")
+        text = msg.get("text")
+        # Capitalize the role (User/Assistant) for clarity
+        prompt += f"{role.capitalize()}: {text}\n"
+    prompt += f"User: {user_input}\nAssistant:"
+    return prompt
+
+# ------------------------------------------------------------------------------
+# Function to Complete an Incomplete Answer (As Before)
+# ------------------------------------------------------------------------------
+def complete_answer_if_incomplete(answer):
+    """
+    Check if the answer ends with proper punctuation.
+    If not, ask Gemini to continue the answer so that it conveys the full meaning.
+    """
+    answer = answer.strip()
+    if not answer or answer[-1] not in ".!?":
+        continuation_prompt = (
+            "It looks like your previous answer might have been cut off. "
+            "Please continue the answer in the same style and provide a complete, coherent response. "
+            "Here is what you have so far:\n\n"
+            f"{answer}\n\nContinue:"
+        )
+        headers = {"Content-Type": "application/json"}
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": continuation_prompt}]}]})
+        if response.status_code == 200:
+            data = response.json()
+            continuation = (
+                data.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [{}])[0]
+                    .get("text", "")
+            )
+            full_answer = answer + " " + continuation.strip()
+            return full_answer
+        else:
+            return answer
+    else:
+        return answer
+
+# ------------------------------------------------------------------------------
+# Chatbot Endpoint (Updated to Maintain Conversation History)
+# ------------------------------------------------------------------------------
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    data = request.get_json()
+    user_input = data.get("userInput")
+    if not user_input:
+        return jsonify({"error": "No user input provided."}), 400
+
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
+    if not gemini_api_key:
+        return jsonify({"error": "Gemini API key not configured."}), 500
+
+    # Initialize conversation history in session if not present
+    if "conversation_history" not in session:
+        session["conversation_history"] = []
+    conversation_history = session["conversation_history"]
+
+    # (Keep your existing appointment scheduling flow logic here)
+    # For example, if using conversation_state for appointment flows:
+    if "conversation_state" not in session:
+        session["conversation_state"] = {}
+    conversation_state = session["conversation_state"]
+
+    if conversation_state.get("awaiting_date"):
+        parsed_date = dateparser.parse(user_input)
+        if parsed_date:
+            conversation_state["date"] = parsed_date.strftime("%Y-%m-%d %H:%M")
+            conversation_state["awaiting_date"] = False
+            conversation_state["awaiting_reason"] = True
+            session.modified = True
+            # Also store this exchange in the conversation history
+            conversation_history.append({"role": "user", "text": user_input})
+            conversation_history.append({"role": "assistant", "text": f"Great! Your appointment is set for {conversation_state['date']}. Now, please describe the reason for your appointment."})
+            session["conversation_history"] = conversation_history
+            return jsonify({
+                "botReply": f"Great! Your appointment is set for {conversation_state['date']}. Now, please describe the reason for your appointment.",
+                "type": "appointment_flow"
+            })
+        else:
+            return jsonify({
+                "botReply": "I couldn't understand that date format. Please try again with a valid date (e.g., 'Next Monday at 3 PM').",
+                "type": "error"
+            })
+
+    if conversation_state.get("awaiting_reason"):
+        reason = user_input
+        user = get_user(session.get("username"))
+        survey_data = dict(get_survey_response(user["id"]))
+        if not user or not survey_data:
+            return jsonify({"botReply": "Please complete your profile survey first.", "type": "error"})
+        appointment_id = insert_appointment_data(
+            name=survey_data["name"],
+            email=user["username"],
+            date=conversation_state["date"],
+            skin=survey_data["skin_type"],
+            phone=survey_data.get("phone", ""),
+            age=survey_data["age"],
+            address=reason,
+            status=False,
+            username=user["username"]
+        )
+        conversation_history.append({"role": "user", "text": user_input})
+        conversation_history.append({"role": "assistant", "text": f"Your appointment has been successfully scheduled for {conversation_state['date']} with the reason: {reason}. Your reference ID is APPT-{appointment_id}."})
+        session["conversation_history"] = conversation_history
+        session["conversation_state"] = {}
+        session.modified = True
+        return jsonify({
+            "botReply": f"Your appointment has been successfully scheduled for {conversation_state['date']} with the reason: {reason}. Your reference ID is APPT-{appointment_id}.",
+            "type": "appointment_confirmation",
+            "appointmentId": appointment_id
+        })
+
+    if "make an appointment" in user_input.lower():
+        conversation_state["awaiting_date"] = True
+        session.modified = True
+        conversation_history.append({"role": "user", "text": user_input})
+        conversation_history.append({"role": "assistant", "text": "When would you like to schedule your appointment? (e.g., 'March 10 at 3 PM')"})
+        session["conversation_history"] = conversation_history
+        return jsonify({
+            "botReply": "When would you like to schedule your appointment? (e.g., 'March 10 at 3 PM')",
+            "type": "appointment_flow"
+        })
+
+    # For general queries, build the prompt including conversation history
+    # Append the new user message to history
+    conversation_history.append({"role": "user", "text": user_input})
+    prompt = build_conversation_prompt(conversation_history, user_input)
+
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        response_json = response.json()
+        bot_reply = (
+            response_json.get("candidates", [{}])[0]
+            .get("content", {})
+            .get("parts", [{}])[0]
+            .get("text", "")
+        )
+
+        # Ensure the answer is complete
+        bot_reply = complete_answer_if_incomplete(bot_reply)
+
+        # Append assistant reply to conversation history and update the session
+        conversation_history.append({"role": "assistant", "text": bot_reply})
+        session["conversation_history"] = conversation_history
+
+        if not bot_reply:
+            return jsonify({"botReply": "I'm having trouble understanding. Could you rephrase that?", "type": "clarification_request"})
+        return jsonify({"botReply": bot_reply, "type": "general_response"})
+
+    except requests.exceptions.RequestException as e:
+        print("Gemini API error:", e)
+        return jsonify({"error": "Error processing request."}), 500
+
+# -----------------------------------------------------------------------------
+# Skincare Routine Generation Endpoint
+# -----------------------------------------------------------------------------
 @app.route("/generate_routine", methods=["POST"])
 def generate_routine():
     if "username" not in session:
         return redirect(url_for("login"))
-
     user = get_user(session["username"])
     user_details = get_survey_response(user["id"])
-
     if not user_details:
         return jsonify({"error": "User details not found"})
-
     routine = generate_skincare_routine(user_details)
     save_skincare_routine(user["id"], routine["morning_routine"], routine["night_routine"])
-
     return jsonify({"message": "Routine Generated", "routine": routine})
 
-
-# ---------------------------
+# -----------------------------------------------------------------------------
 # User Authentication & Survey Routes
-# ---------------------------
+# -----------------------------------------------------------------------------
 @app.route("/")
 def index():
-    # If the user is not logged in, redirect to the login page.
     if "username" not in session:
         return redirect(url_for("login"))
     return render_template("index.html")
@@ -440,7 +629,7 @@ def login():
         user = get_user(username)
         if user and check_password_hash(user["password"], password):
             session["username"] = username
-            # Special redirect for the doctor account
+            # Special redirect for doctor account
             if username == "doctor1":
                 return redirect(url_for("allappointments"))
             survey_response = get_survey_response(user["id"])
@@ -477,8 +666,8 @@ def survey():
         skincare_routine = request.form["skincare_routine"]
         stress_level = request.form["stress_level"]
         insert_survey_response(user_id, name, age, gender, concerns, acne_frequency, comedones_count,
-                                first_concern, cosmetics_usage, skin_reaction, skin_type,
-                                medications, skincare_routine, stress_level)
+                               first_concern, cosmetics_usage, skin_reaction, skin_type,
+                               medications, skincare_routine, stress_level)
         return redirect(url_for("profile"))
     return render_template("survey.html", name=session.get("name", ""), age=session.get("age", ""))
 
@@ -487,14 +676,14 @@ def profile():
     if "username" in session:
         user = get_user(session["username"])
         survey_response = get_survey_response(user["id"])
-        routine = get_skincare_routine(user["id"])  # Fetch AI-generated routine
+        routine = get_skincare_routine(user["id"])
         if survey_response:
             return render_template("profile.html", survey=survey_response, routine=routine)
     return redirect(url_for("index"))
 
-# ---------------------------
+# -----------------------------------------------------------------------------
 # Appointment Routes
-# ---------------------------
+# -----------------------------------------------------------------------------
 @app.route("/bookappointment")
 def bookappointment():
     return render_template("bookappointment.html")
@@ -503,7 +692,6 @@ def bookappointment():
 def appointment():
     if "username" not in session:
         return jsonify({"error": "Unauthorized"}), 401
-
     name = request.form.get("name")
     email = request.form.get("email")
     date = request.form.get("date")
@@ -512,14 +700,9 @@ def appointment():
     age = request.form.get("age")
     address = request.form.get("reason")
     username = session["username"]
-    status = False  # Default status is "Pending"
-
+    status = False
     appointment_id = insert_appointment_data(name, email, date, skin, phone, age, address, status, username)
-
     return jsonify({"message": "Appointment successfully booked", "appointmentId": appointment_id})
-
-
-
 
 @app.route("/userappointment", methods=["GET"])
 def userappoint():
@@ -531,8 +714,6 @@ def userappoint():
         return jsonify({"all_appointments": appointments})
     return render_template("userappointment.html", all_appointments=appointments)
 
-
-
 @app.route("/delete_user_request", methods=["POST"])
 def delete_user_request():
     data = request.get_json()
@@ -540,13 +721,8 @@ def delete_user_request():
         appointment_id = int(data.get("id"))
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid appointment ID"}), 400
-
     delete_appointment(appointment_id)
     return jsonify({"message": "deleted successfully"})
-
-
-
-
 
 @app.route("/face_analysis", methods=["POST"])
 def face_analysis():
@@ -554,133 +730,60 @@ def face_analysis():
     update_appointment_status(appointment_id)
     return jsonify({"message": "updated"})
 
+# -----------------------------------------------------------------------------
+# AI Skin Analysis & Product Recommendation Endpoint
+# -----------------------------------------------------------------------------
 
-# ---------------------------
-# AI Skin Analysis & Product Recommendation
-# ---------------------------
-# Initialize the Roboflow skin detection model
 UPLOAD_FOLDER = "static/uploads"
 ANNOTATIONS_FOLDER = "static/annotations"
-# Mapping to convert oiliness model class names if needed
+# Mapping for oiliness detection model class names
 class_mapping = {
     "Jenis Kulit Wajah - v6 2023-06-17 11-53am": "oily skin",
     "-": "normal/dry skin"
 }
 
-def recommend_products_based_on_classes(classes):
-    recommendations = []
-    df_columns_lower = [col.lower() for col in df.columns]
-    USD_TO_INR = 83  # ✅ Currency conversion rate (update as needed)
-
-    for skin_condition in classes:
-        condition_lower = skin_condition.lower()
-        if condition_lower in df_columns_lower:
-            original_column = df.columns[df_columns_lower.index(condition_lower)]
-            
-            # ✅ Filter relevant products
-            filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]]
-
-            # ✅ Convert Price to INR (only if it's a valid number)
-            def convert_price(price):
-                try:
-                    return round(float(price) * USD_TO_INR, 2)  # Convert to INR with 2 decimal places
-                except ValueError:
-                    return "N/A"  # Handle missing/invalid price
-
-            filtered["Price"] = filtered["Price"].apply(convert_price)
-
-            # ✅ Process Ingredients (limit to first 5 items)
-            filtered["Ingredients"] = filtered["Ingredients"].apply(lambda x: ", ".join(x.split(", ")[:5]))
-
-            products = filtered.head(5).to_dict(orient="records")
-        else:
-            products = []
-
-        # ✅ Get AI-generated skincare insights (optional)
-        ai_analysis = get_gemini_recommendations([skin_condition])
-
-        # ✅ Store product details and AI analysis
-        recommendations.append({
-            "condition": skin_condition,
-            "products": products, 
-            "ai_analysis": ai_analysis  
-        })
-
-    return recommendations
-
-
-
-def get_gemini_recommendations(skin_conditions):
-    """
-    Uses Gemini Free API + Transformer-based summarization to generate structured skincare recommendations.
-    """
-    if not skin_conditions:
-        return "No skin conditions detected for analysis."
-
-    prompt = f"""
-    You are an AI skincare expert. A user uploaded an image, and the detected skin conditions are: {', '.join(skin_conditions)}.
-
-    - Explain these skin conditions in simple terms.
-    - List the best skincare ingredients for these conditions.
-    - Provide a basic morning and night skincare routine.
-    - Suggest 3 skincare products with pros & cons.
-    - Give 2 lifestyle tips for better skin health.
-
-    Keep the response concise and well-structured.
-    """
-
-    try:
-        # 🔹 Generate AI recommendations using Gemini API
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-
-        if response and response.text:
-            raw_text = response.text.strip()
-        else:
-            return "AI analysis failed."
-
-        # 🔹 Summarize the AI-generated response using Transformer model
-        summary = summarizer(raw_text, max_length=200, min_length=80, do_sample=False)[0]["summary_text"]
-        
-        return summary
-
-    except Exception as e:
-        return f"❌ AI error: {str(e)}"
-# (Assume your recommend_products_based_on_classes() function is defined as needed.)
-
-# ---------------------------
-# /predict Endpoint
-# ---------------------------
 @app.route("/predict", methods=["POST", "GET"])
 def predict():
     """Handles AI Skin Analysis, detection, and AI-enhanced recommendations."""
     if request.method == "POST":
         try:
-            # Ensure image is uploaded
+            # Ensure an image file is uploaded
             if "image" not in request.files:
                 return jsonify({"error": "No image uploaded"}), 400
 
             image_file = request.files["image"]
 
-            # Validate file type (Only accept JPG, PNG)
+            # Validate file type (Only accept JPG, JPEG, PNG)
             ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
             if not ('.' in image_file.filename and image_file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS):
                 return jsonify({"error": "Invalid file type. Only JPG and PNG are allowed."}), 400
 
-            # Ensure uploads folder exists
-            UPLOAD_FOLDER = "static/uploads"
+            # Save the uploaded image
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             image_filename = secure_filename(str(uuid.uuid4()) + ".jpg")
             image_path = os.path.join(UPLOAD_FOLDER, image_filename)
             image_file.save(image_path)
 
-            # Step 1: Run Face Analysis Model (Detect Skin Conditions)
+            # ---------------------------------------------------------------------
+            # Step 1: Run Skin Detection Model
+            # ---------------------------------------------------------------------
             unique_classes = set()
             skin_result = model_skin.predict(image_path, confidence=15, overlap=30).json()
-            skin_labels = [pred["class"] for pred in skin_result.get("predictions", [])]
+
+            # Check if any skin/face predictions were returned.
+            predictions = skin_result.get("predictions", [])
+            if not predictions:
+                return jsonify({
+                    "error": "No face detected in the uploaded image. Please upload a clear image of your face."
+                }), 400
+
+            # Extract detected skin labels
+            skin_labels = [pred["class"] for pred in predictions]
             unique_classes.update(skin_labels)
 
+            # ---------------------------------------------------------------------
             # Step 2: Run Oiliness Detection
+            # ---------------------------------------------------------------------
             custom_configuration = InferenceConfiguration(confidence_threshold=0.3)
             with CLIENT.use_configuration(custom_configuration):
                 oiliness_result = CLIENT.infer(image_path, model_id="oilyness-detection-kgsxz/1")
@@ -688,11 +791,16 @@ def predict():
             if not oiliness_result.get("predictions"):
                 unique_classes.add("dryness")
             else:
-                oiliness_classes = [class_mapping.get(pred["class"], pred["class"]) for pred in oiliness_result.get("predictions", []) if pred.get("confidence", 0) >= 0.3]
+                oiliness_classes = [
+                    class_mapping.get(pred["class"], pred["class"])
+                    for pred in oiliness_result.get("predictions", [])
+                    if pred.get("confidence", 0) >= 0.3
+                ]
                 unique_classes.update(oiliness_classes)
 
+            # ---------------------------------------------------------------------
             # Step 3: Annotate Image using Supervision
-            ANNOTATIONS_FOLDER = "static/annotations"
+            # ---------------------------------------------------------------------
             os.makedirs(ANNOTATIONS_FOLDER, exist_ok=True)
             annotated_filename = f"annotations_{image_filename}"
             annotated_image_path = os.path.join(ANNOTATIONS_FOLDER, annotated_filename)
@@ -704,10 +812,14 @@ def predict():
             annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections)
             cv2.imwrite(annotated_image_path, annotated_image)
 
-            # Step 4: AI-Generated Recommendations using Gemini Free API & LangChain
+            # ---------------------------------------------------------------------
+            # Step 4: Generate AI Recommendations & Summarization
+            # ---------------------------------------------------------------------
             ai_analysis_text = get_gemini_recommendations(unique_classes)
 
+            # ---------------------------------------------------------------------
             # Step 5: Generate Product Recommendations from Dataset
+            # ---------------------------------------------------------------------
             recommended_products = recommend_products_based_on_classes(list(unique_classes))
 
             prediction_data = {
@@ -723,9 +835,12 @@ def predict():
             traceback.print_exc()
             return jsonify({"error": "An error occurred during analysis.", "details": str(e)}), 500
 
-    # For GET requests, load the analysis page
+    # For GET requests, render the analysis page
     return render_template("face_analysis.html", data={})
 
+# =============================================================================
+# Main Entry Point
+# =============================================================================
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
