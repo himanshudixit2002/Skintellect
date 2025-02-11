@@ -52,12 +52,7 @@ project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
 
 # Initialize Oiliness Detection Client
-CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", 
-                             api_key=os.environ["OILINESS_API_KEY"])
-
-# =============================================================================
-# Helper Functions
-# =============================================================================
+CLIENT = InferenceHTTPClient(api_url="https://detect.roboflow.com", api_key=os.environ["OILINESS_API_KEY"])
 chat_prompt_template = PromptTemplate(
     input_variables=["user_input"],
     template="""
@@ -115,6 +110,11 @@ def langchain_summarize(text, max_length, min_length):
     - Some **product recommendations** (if needed)  
     - **Fun, relatable skincare tips** (keep it engaging!)  
     - If needed, **a myth-busting fact** about skincare 🚀  
+    
+    Here’s the text to summarize:
+    {text}
+
+    Please summarize the above text to have a maximum of {max_length} words and a minimum of {min_length} words.
 
     💡 **Important:**  
     - Keep it **short, casual, and easy to follow.** No jargon, no fancy science—just **real** advice!  
@@ -287,7 +287,7 @@ def get_gemini_recommendations(skin_conditions):
     - Give 2 lifestyle tips for better skin health.
 
     Keep the response concise and well-structured.
-    Please strictly format your response using Markdown (use '#' for headings, '-' for lists, '**' for bold, etc.), and ensure it is well-structured.
+    Please respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis
     """
 
     headers = {"Content-Type": "application/json"}
@@ -597,7 +597,7 @@ def chatbot():
     conversation_history.append({"role": "user", "text": user_input})
     prompt = build_conversation_prompt(conversation_history, user_input)
     # Append enhanced instructions to encourage interactive, engaging responses:
-    prompt += "\n\nPlease respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis, and ask follow-up questions when appropriate."
+    prompt += "\n\nPlease respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis"
 
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
