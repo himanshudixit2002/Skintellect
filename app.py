@@ -162,7 +162,7 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            is_doctor BOOLEAN DEFAULT FALSE
+            is_doctor  INTEGER DEFAULT 0
         )''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS survey_responses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -191,7 +191,7 @@ def create_tables():
             phone TEXT,
             age TEXT,
             address TEXT,
-            status BOOLEAN,
+            status INTEGER DEFAULT 0,
             username TEXT
         )''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS skincare_routines (
@@ -215,9 +215,10 @@ def create_tables():
 
 create_tables()
 
-def insert_user(username, password):
+def insert_user(username, password, is_doctor=False):
     with get_db_connection() as conn:
-        conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        conn.execute("INSERT INTO users (username, password, is_doctor) VALUES (?, ?, ?)",
+                     (username, password, int(is_doctor)))
         conn.commit()
 
 def get_user(username):
@@ -464,8 +465,10 @@ def build_conversation_prompt(history, user_input):
     Build a prompt that includes previous conversation history and the new user input.
     This helps the assistant generate a response in context.
     """
-    prompt = "You are a helpful, friendly skincare assistant. Keep your tone casual and conversational.\n\n"
-    prompt += "Here is the conversation so far:\n"
+    prompt = """You are a helpful, friendly skincare assistant. Keep your tone casual and conversational.
+Respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis.
+
+Here is the conversation so far:\n"""
     for msg in history:
         role = msg.get("role")
         text = msg.get("text")
@@ -596,8 +599,6 @@ def chatbot():
     # General queries – update conversation history and build the prompt
     conversation_history.append({"role": "user", "text": user_input})
     prompt = build_conversation_prompt(conversation_history, user_input)
-    # Append enhanced instructions to encourage interactive, engaging responses:
-    prompt += "\n\nPlease respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis"
 
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
@@ -658,12 +659,13 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        is_doctor = True if request.form.get("is_doctor") == "on" else False
         name = request.form.get("name", "")
         age = request.form.get("age", "")
         hashed_password = generate_password_hash(password)
         if get_user(username):
             return render_template("register.html", error="Username already exists.")
-        insert_user(username, hashed_password)
+        insert_user(username, hashed_password,is_doctor)
         session["username"] = username
         session["name"] = name
         session["age"] = age
@@ -681,9 +683,13 @@ def login():
         user = get_user(username)
         if user and check_password_hash(user["password"], password):
             session["username"] = username
-            # Special redirect for doctor account
-            if username == "doctor1":
-                return redirect(url_for("allappointments"))
+            # Correct doctor check using user["is_doctor"]
+            if user["is_doctor"] == 1:
+                session["is_doctor"] = True
+                return redirect(url_for("doctor_dashboard"))
+            
+            # Regular user flow
+            session["is_doctor"] = False
             survey_response = get_survey_response(user["id"])
             if survey_response:
                 return redirect(url_for("profile"))
@@ -778,9 +784,38 @@ def delete_user_request():
 
 @app.route("/face_analysis", methods=["POST"])
 def face_analysis():
+    if "username" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    user = get_user(session["username"])
+    # Only allow doctors to update appointment status
+    if not user or user["is_doctor"] != 1:
+        return jsonify({"error": "Access denied"}), 403
     appointment_id = request.form.get("appointment_id")
     update_appointment_status(appointment_id)
     return jsonify({"message": "updated"})
+
+def get_all_appointments():
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        appointments = cursor.execute("SELECT * FROM appointment").fetchall()
+        return [dict(row) for row in appointments]
+
+@app.route("/doctor_dashboard")
+def doctor_dashboard():
+    # Check if a user is logged in
+    if "username" not in session:
+        return redirect(url_for("login"))
+    user = get_user(session["username"])
+    # Ensure that only doctors can access this route
+    if not user or user["is_doctor"] != 1:
+        return redirect(url_for("login"))
+    
+    # Fetch all appointments (or filter by status/other criteria as needed)
+    appointments = get_all_appointments()
+    return render_template("doctor_dashboard.html",
+                           appointments=appointments,
+                           current_user=user)
+
 
 # -----------------------------------------------------------------------------
 # AI Skin Analysis & Product Recommendation Endpoint

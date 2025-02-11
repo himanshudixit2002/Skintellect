@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+{% block title %}Doctor Dashboard | SKINTELLECT{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-lg">
+      <div class="p-6">
+        <h1 class="text-2xl font-bold text-blue-600">
+          <i class="fas fa-stethoscope mr-2"></i>SKINTELLECT
+        </h1>
+      </div>
+      <nav class="p-4">
+        <ul class="space-y-4">
+          <li>
+            <a href="/doctor_dashboard" class="flex items-center p-2 text-gray-700 hover:bg-blue-50 rounded-md transition">
+              <i class="fas fa-calendar-check mr-3"></i>Appointments
+            </a>
+          </li>
+          <li>
+            <a href="/profile" class="flex items-center p-2 text-gray-700 hover:bg-blue-50 rounded-md transition">
+              <i class="fas fa-user mr-3"></i>Profile
+            </a>
+          </li>
+          <li>
+            <a href="/logout" class="flex items-center p-2 text-gray-700 hover:bg-blue-50 rounded-md transition">
+              <i class="fas fa-sign-out-alt mr-3"></i>Logout
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+      <!-- Header -->
+      <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+        <div class="text-xl font-semibold text-gray-800">Doctor Dashboard</div>
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+          </div>
+          <div class="flex items-center space-x-2">
+            <img src="/static/assets/user.png" alt="Doctor Avatar" class="w-8 h-8 rounded-full">
+            <span class="text-gray-800 font-medium">{{ current_user.username }}</span>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Dashboard Content -->
+      <main class="p-6 flex-1 overflow-y-auto">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">All Appointments</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Loop through appointments -->
+          {% for appointment in appointments %}
+          <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800">{{ appointment.name }}</h3>
+                <p class="text-sm {% if appointment.status %}text-green-600{% else %}text-yellow-600{% endif %}">
+                  {% if appointment.status %}
+                    Confirmed
+                  {% else %}
+                    Pending
+                  {% endif %}
+                </p>
+              </div>
+              <div class="text-sm text-gray-400">{{ appointment.requested_time }}</div>
+            </div>
+            <div class="mb-4">
+              <p class="text-gray-700">
+                <i class="fas fa-calendar mr-2"></i> {{ appointment.date }} - {{ appointment.time }}
+              </p>
+              <p class="text-gray-700">
+                <i class="fas fa-map-marker-alt mr-2"></i> {{ appointment.location }}
+              </p>
+            </div>
+            <div class="flex space-x-3">
+              <a href="/appointment/{{ appointment.id }}" class="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                <i class="fas fa-eye mr-2"></i>View Details
+              </a>
+              <button data-id="{{ appointment.id }}" class="w-10 h-10 bg-green-100 text-green-600 rounded flex items-center justify-center hover:bg-green-200 transition mark-complete">
+                <i class="fas fa-check"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+          <!-- If no appointments, you might show a placeholder -->
+          {% if appointments|length == 0 %}
+          <div class="col-span-full text-center text-gray-500">No appointments found.</div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}
