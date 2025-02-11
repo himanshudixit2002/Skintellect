@@ -260,9 +260,9 @@ def find_appointments(username):
         appointments = cursor.execute("SELECT * FROM appointment WHERE username = ?", (username,)).fetchall()
         return [dict(row) for row in appointments]
 
-def update_appointment_status(appointment_id):
+def update_appointment_status(appointment_id, status):
     with get_db_connection() as conn:
-        conn.execute("UPDATE appointment SET status = ? WHERE id = ?", (True, appointment_id))
+        conn.execute("UPDATE appointment SET status = ? WHERE id = ?", (status, appointment_id))
         conn.commit()
 
 def delete_appointment(appointment_id):
@@ -742,6 +742,72 @@ def profile():
 # -----------------------------------------------------------------------------
 # Appointment Routes
 # -----------------------------------------------------------------------------
+from flask import abort
+@app.route("/appointment/<int:appointment_id>")
+def appointment_detail(appointment_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        appointment = cursor.execute("SELECT * FROM appointment WHERE id = ?", (appointment_id,)).fetchone()
+        if not appointment:
+            abort(404)
+    return render_template("appointment_detail.html", appointment=appointment)
+
+@app.route("/update_appointment", methods=["POST"])
+def update_appointment():
+    # Ensure that only logged-in doctors can update appointment status
+    if "username" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    user = get_user(session["username"])
+    if not user or user["is_doctor"] != 1:
+        return jsonify({"error": "Access denied"}), 403
+
+    data = request.get_json()
+    appointment_id = data.get("appointment_id")
+    action = data.get("action")  # Expected to be "confirm" or "reject"
+    if not appointment_id or not action:
+        return jsonify({"error": "Missing appointment id or action."}), 400
+
+    # Set status: 1 for confirm, 2 for reject
+    if action == "confirm":
+        status = 1
+    elif action == "reject":
+        status = 2
+    else:
+        return jsonify({"error": "Invalid action."}), 400
+
+    try:
+        update_appointment_status(appointment_id, status)
+        return jsonify({"message": f"Appointment {appointment_id} updated successfully.", "new_status": status})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/delete_appointment", methods=["POST"])
+def delete_appointment_route():
+    # Ensure the user is logged in.
+    if "username" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    try:
+        appointment_id = int(data.get("id"))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid appointment ID"}), 400
+
+    # Check if the appointment exists and belongs to the logged-in user.
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        appointment = cursor.execute("SELECT * FROM appointment WHERE id = ?", (appointment_id,)).fetchone()
+        if not appointment:
+            return jsonify({"error": "Appointment not found."}), 404
+        if appointment["username"] != session["username"]:
+            return jsonify({"error": "You do not have permission to delete this appointment."}), 403
+
+    # Delete the appointment.
+    delete_appointment(appointment_id)
+    return jsonify({"message": "Appointment deleted successfully."})
+
+
 @app.route("/bookappointment")
 def bookappointment():
     return render_template("bookappointment.html")
