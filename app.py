@@ -65,13 +65,13 @@ def langchain_summarize(text, max_length, min_length):
     Uses a friendly prompt to generate a short, engaging summary of the provided text.
     """
     prompt_template = """
-Hey there, superstar! 🌟 I'd love a quick, punchy summary of the text below. Please condense it to under {max_length} words (but no fewer than {min_length} words) and add a playful twist if possible.
+Hey there, rockstar! 🌟 I’m super excited to chat with you. I need your magic to create a lively and interactive summary of the text below. Please condense it to under {max_length} words (but no fewer than {min_length} words) and feel free to sprinkle in playful insights or even a fun question that sparks further conversation.
 
 -----------------------------------
 {text}
 -----------------------------------
 
-Thank you so much!
+I can’t wait to hear your thoughts—let’s keep this conversation going!
 """
     prompt = PromptTemplate(
         input_variables=["text", "max_length", "min_length"],
@@ -544,7 +544,7 @@ def chatbot():
         bot_reply = response.text
 
         # Force summarization using LangChain summarizer.
-        bot_reply = langchain_summarize(bot_reply, max_length=50, min_length=30)
+        bot_reply = langchain_summarize(bot_reply, max_length=60, min_length=40)
         bot_reply = complete_answer_if_incomplete(bot_reply)
 
         conversation_history.append({"role": "assistant", "text": bot_reply})
