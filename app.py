@@ -21,7 +21,6 @@ from langchain_core.prompts import PromptTemplate
 # Environment & API Configuration
 # =============================================================================
 
-# Load environment variables from .env file
 load_dotenv()
 
 # Gemini API configuration
@@ -46,15 +45,12 @@ app.secret_key = SECRET_KEY
 # Data & Model Loading
 # =============================================================================
 
-# Load the skincare products dataset
 df = pd.read_csv(os.path.join("dataset", "updated_skincare_products.csv"))
 
-# Initialize Roboflow skin detection model
 rf_skin = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
 project_skin = rf_skin.workspace().project("skin-detection-pfmbg")
 model_skin = project_skin.version(2).model
 
-# Initialize Oiliness Detection Client
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
     api_key=os.environ["OILINESS_API_KEY"]
@@ -66,17 +62,16 @@ CLIENT = InferenceHTTPClient(
 
 def langchain_summarize(text, max_length, min_length):
     """
-    Uses a friendly prompt to generate a short summary of the provided text.
+    Uses a friendly prompt to generate a short, engaging summary of the provided text.
     """
     prompt_template = """
-Hey there, superstar! 🌟 Could you give me a quick and punchy summary of the text below? 
-Please keep it under {max_length} words (but at least {min_length} words) and feel free to add a fun twist or question to keep things lively!
+Hey there, superstar! 🌟 I'd love a quick, punchy summary of the text below. Please condense it to under {max_length} words (but no fewer than {min_length} words) and add a playful twist if possible.
 
 -----------------------------------
 {text}
 -----------------------------------
 
-Thanks a million!
+Thank you so much!
 """
     prompt = PromptTemplate(
         input_variables=["text", "max_length", "min_length"],
@@ -236,25 +231,24 @@ def get_gemini_recommendations(skin_conditions):
         return "No skin conditions detected for analysis."
     
     prompt = f"""
-    You are an AI skincare expert. A user uploaded an image, and the detected skin conditions are: {', '.join(skin_conditions)}.
+You are a knowledgeable AI skincare expert. A user uploaded an image, and the following skin conditions were detected: {', '.join(skin_conditions)}.
 
-    - Explain these skin conditions in simple terms.
-    - List the best skincare ingredients for these conditions.
-    - Provide a basic morning and night skincare routine.
-    - Suggest 3 skincare products with pros & cons.
-    - Give 2 lifestyle tips for better skin health.
+Please:
+- Explain these conditions in simple, easy-to-understand terms.
+- Recommend the best skincare ingredients for these conditions.
+- Provide a basic morning and night skincare routine.
+- Suggest 3 skincare products with pros & cons.
+- Offer 2 lifestyle tips for improved skin health.
 
-    Keep the response concise and well-structured.
-    Please respond in an engaging and interactive manner using Markdown. Use a warm, friendly tone, include emojis.
-    """
+Keep your response concise, structured, and engaging. Use Markdown formatting, include emojis, and maintain a warm, friendly tone.
+"""
     
     headers = {"Content-Type": "application/json"}
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
     
-    # Debug logs
-    print("Gemini API response status:", response.status_code)
-    print("Gemini API raw response:", response.json())
+    print("Gemini API response status:", response.status_code)  # Debug log
+    print("Gemini API raw response:", response.json())         # Debug log
     
     if response.status_code == 200:
         data = response.json()
@@ -302,43 +296,38 @@ def recommend_products_based_on_classes(classes):
 
 def generate_skincare_routine(user_details):
     prompt_template = """
-    Based on the following user skin details, generate a **concise, structured, and formatted** skincare routine:
+Based on the following skin details, please create a concise, structured, and formatted skincare routine:
 
-    - **Age:** {age}
-    - **Gender:** {gender}
-    - **Skin Type:** {skin_type}
-    - **Main Concerns:** {concerns}
-    - **Acne Frequency:** {acne_frequency}
-    - **Current Skincare Routine:** {skincare_routine}
-    - **Stress Level:** {stress_level}
+- **Age:** {age}
+- **Gender:** {gender}
+- **Skin Type:** {skin_type}
+- **Main Concerns:** {concerns}
+- **Acne Frequency:** {acne_frequency}
+- **Current Skincare Routine:** {skincare_routine}
+- **Stress Level:** {stress_level}
 
-    **Output Format (Strictly follow this format!):**
-    
-    🌞 **Morning Routine**  
-    1. Step 1  
-    2. Step 2  
-    3. Step 3  
-    4. Step 4  
-    5. Step 5  
-    6. Step 6  
-    7. Step 7   
+**Output Format (Please follow exactly):**
 
-    🌙 **Night Routine**  
-    1. Step 1  
-    2. Step 2  
-    3. Step 3  
-    4. Step 4  
-    5. Step 5  
-    6. Step 6  
-    7. Step 7   
+🌞 **Morning Routine**  
+1. Step 1  
+2. Step 2  
+3. Step 3  
+4. Step 4  
+5. Step 5  
+6. Step 6  
+7. Step 7  
 
-    Ensure that:
-    - Each step is numbered properly.
-    - Use bold headings without unnecessary asterisks.
-    - Provide exactly 7 steps per routine.
-    - Each step should be actionable and easy to follow.
-    Please strictly format your response using Markdown.
-    """
+🌙 **Night Routine**  
+1. Step 1  
+2. Step 2  
+3. Step 3  
+4. Step 4  
+5. Step 5  
+6. Step 6  
+7. Step 7  
+
+Each step should be actionable, clearly numbered, and easy to follow. Use Markdown formatting.
+"""
     prompt = PromptTemplate(
         input_variables=["age", "gender", "skin_type", "concerns", "acne_frequency", "skincare_routine", "stress_level"],
         template=prompt_template
@@ -408,12 +397,13 @@ def get_skincare_routine(user_id):
 # --- Helper Functions for Chatbot ---
 def build_conversation_prompt(history, user_input):
     """
-    Build a prompt including the conversation history and the new user input.
+    Build a conversation prompt that includes the conversation history and the new user input.
     """
-    prompt = """You are a helpful, friendly skincare assistant. Keep your tone casual and conversational.
-Respond in an engaging and interactive manner using Markdown. Include emojis and use a warm tone.
-
-Here is the conversation so far:\n"""
+    prompt = (
+        "You are a friendly, knowledgeable skincare assistant. Your responses should be concise, engaging, "
+        "and formatted in Markdown with emojis where appropriate.\n\n"
+        "Conversation so far:\n"
+    )
     for msg in history:
         role = msg.get("role")
         text = msg.get("text")
@@ -423,15 +413,14 @@ Here is the conversation so far:\n"""
 
 def complete_answer_if_incomplete(answer):
     """
-    Check if the answer ends with proper punctuation.
-    If not, request Gemini to continue the answer.
+    Check if the answer ends with proper punctuation. If not, ask Gemini to continue the answer.
     """
     answer = answer.strip()
     if not answer or answer[-1] not in ".!?":
         continuation_prompt = (
-            "It looks like your previous answer might have been cut off. "
-            "Please continue the answer in the same style and provide a complete, coherent response. "
-            "Here is what you have so far:\n\n"
+            "It appears that the response may have been cut off. "
+            "Could you please continue the answer in the same style, ensuring a complete and coherent response? "
+            "Here is the answer so far:\n\n"
             f"{answer}\n\nContinue:"
         )
         headers = {"Content-Type": "application/json"}
@@ -460,7 +449,7 @@ def chatbot():
     if not user_input:
         return jsonify({"error": "No user input provided."}), 400
 
-    # Initialize session variables for conversation history and state.
+    # Initialize session variables if not present
     if "conversation_history" not in session:
         session["conversation_history"] = []
     conversation_history = session["conversation_history"]
