@@ -65,13 +65,15 @@ def langchain_summarize(text, max_length, min_length):
     Uses a friendly prompt to generate a short, engaging summary of the provided text.
     """
     prompt_template = """
-Hey there, rockstar! 🌟 I’m super excited to chat with you. I need your magic to create a lively and interactive summary of the text below. Please condense it to under {max_length} words (but no fewer than {min_length} words) and feel free to sprinkle in playful insights or even a fun question that sparks further conversation.
+Hey, could you please summarize the text below in a simple, friendly way?
+Keep it short—between {min_length} and {max_length} words.
+Feel free to add a little comment or question to keep our chat going!
 
 -----------------------------------
 {text}
 -----------------------------------
 
-I can’t wait to hear your thoughts—let’s keep this conversation going!
+Thanks a lot!
 """
     prompt = PromptTemplate(
         input_variables=["text", "max_length", "min_length"],
