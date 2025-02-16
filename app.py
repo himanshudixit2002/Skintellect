@@ -16,7 +16,11 @@ import dateparser
 from werkzeug.utils import secure_filename
 import markdown
 from langchain_core.prompts import PromptTemplate
-
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
 # =============================================================================
 # Environment & API Configuration
 # =============================================================================
@@ -880,6 +884,158 @@ def predict():
             return jsonify({"error": "An error occurred during analysis.", "details": str(e)}), 500
 
     return render_template("face_analysis.html", data={})
+
+
+# =============================================================================
+# Skin Disease Classifier Prediction Endpoint
+# =============================================================================
+def get_gemini_disease_analysis(predicted_disease):
+    prompt = f"""
+You are an experienced dermatology expert. A user uploaded an image and the skin disease classifier predicted the condition: "{predicted_disease}".
+
+Please:
+- Explain this condition in simple, easy-to-understand terms.
+- Recommend potential treatment or skincare suggestions.
+- Provide a basic skincare routine tailored for managing this condition.
+- Offer lifestyle or dietary tips for overall skin health.
+
+Keep your response concise, structured, and engaging. Use Markdown formatting, include emojis, and maintain a warm, friendly tone.
+    """
+    headers = {"Content-Type": "application/json"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    try:
+        response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+    except Exception as e:
+        print("Error making request to Gemini API:", e)
+        return "Failed to connect to the AI service."
+    
+    print("Gemini API response status (disease):", response.status_code)
+    
+    try:
+        data = response.json()
+    except Exception as e:
+        print("Error decoding JSON from Gemini API response:", e)
+        return "Failed to decode AI response."
+    
+    print("Gemini API raw response (disease):", data)
+    
+    if response.status_code == 200:
+        try:
+            candidate = data.get("candidates", [{}])[0]
+            text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+            if text and text.strip():
+                return text.strip()
+            else:
+                return "AI did not return any analysis."
+        except Exception as e:
+            print("Error parsing Gemini API response:", e)
+            return "Failed to parse AI response."
+    else:
+        return "Failed to get a valid response from the AI service."
+
+
+# Define classes and image size (as used during training)
+CLASSES = ['acne', 'hyperpigmentation', 'Nail_psoriasis', 'SJS-TEN', 'Vitiligo']
+IMG_SIZE = (224, 224)
+
+# --- Skin Disease Classifier Prediction Endpoint ---
+def mish(x):
+    return x * tf.math.tanh(tf.math.softplus(x))
+tf.keras.utils.get_custom_objects().update({'mish': layers.Activation(mish)})
+
+SKIN_MODEL_PATH = os.path.join("model", "skin_disease_model.h5")
+if os.path.exists(SKIN_MODEL_PATH):
+    best_model = load_model(SKIN_MODEL_PATH)
+else:
+    best_model = None
+    print("Model file not found at", SKIN_MODEL_PATH)
+
+def predict_disease(model, image_path, target_size=(224, 224)):
+    img = image.load_img(image_path, target_size=target_size)
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = tf.keras.applications.efficientnet_v2.preprocess_input(img_array)
+    predictions = model.predict(img_array)
+    probabilities = np.round(predictions[0] * 100, 2)
+    predicted_class_idx = np.argmax(predictions, axis=1)[0]
+    predicted_label = CLASSES[predicted_class_idx]
+    formatted_probabilities = { CLASSES[i]: f"{probabilities[i]:.2f}%" for i in range(len(CLASSES)) }
+    return predicted_label, formatted_probabilities
+
+def get_gemini_disease_analysis(predicted_disease):
+    prompt = f"""
+You are an experienced dermatology expert. A user uploaded an image and the skin disease classifier predicted the condition: "{predicted_disease}".
+
+Please:
+- Explain this condition in simple, easy-to-understand terms.
+- Recommend potential treatment or skincare suggestions.
+- Provide a basic skincare routine tailored for managing this condition.
+- Offer lifestyle or dietary tips for overall skin health.
+
+Keep your response concise, structured, and engaging. Use Markdown formatting, include emojis, and maintain a warm, friendly tone.
+    """
+    headers = {"Content-Type": "application/json"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    try:
+        response = requests.post(url, headers=headers, json={"contents": [{"parts": [{"text": prompt}]}]})
+    except Exception as e:
+        print("Error making request to Gemini API:", e)
+        return "Failed to connect to the AI service."
+    print("Gemini API response status (disease):", response.status_code)
+    try:
+        data = response.json()
+    except Exception as e:
+        print("Error decoding JSON from Gemini API response:", e)
+        return "Failed to decode AI response."
+    print("Gemini API raw response (disease):", data)
+    if response.status_code == 200:
+        try:
+            candidate = data.get("candidates", [{}])[0]
+            text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+            if text and text.strip():
+                return text.strip()
+            else:
+                return "AI did not return any analysis."
+        except Exception as e:
+            print("Error parsing Gemini API response:", e)
+            return "Failed to parse AI response."
+    else:
+        return "Failed to get a valid response from the AI service."
+
+@app.route("/skin_predict", methods=["GET", "POST"])
+def skin_predict():
+    if request.method == "POST":
+        if "image" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
+        image_file = request.files["image"]
+        if image_file.filename == "":
+            return jsonify({"error": "No selected file"}), 400
+        ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+        if not ('.' in image_file.filename and image_file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS):
+            return jsonify({"error": "Invalid file type. Only JPG and PNG are allowed."}), 400
+        upload_folder = os.path.join("static", "skin_uploads")
+        os.makedirs(upload_folder, exist_ok=True)
+        filename = secure_filename(str(uuid.uuid4()) + "_" + image_file.filename)
+        file_path = os.path.join(upload_folder, filename)
+        image_file.save(file_path)
+        print(f"Saved file: {file_path}")
+        if best_model is None:
+            return jsonify({"error": "Model file not found"}), 500
+        predicted_label, prediction_probs = predict_disease(best_model, file_path)
+        print(f"Prediction: {predicted_label}")
+        ai_analysis_text = get_gemini_disease_analysis(predicted_label)
+        result = {
+            "prediction": predicted_label,
+            "probabilities": prediction_probs,
+            "ai_analysis": ai_analysis_text,
+            "image_url": "/" + file_path.replace("\\", "/")
+        }
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.content_type == "application/json":
+            return jsonify(result)
+        else:
+            return render_template("skin_result.html", **result)
+    return render_template("skin_upload.html")
 
 # =============================================================================
 # Main Entry Point

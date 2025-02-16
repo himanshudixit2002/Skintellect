@@ -49,6 +49,7 @@
           <!-- For regular users, show the standard menu -->
           <a href="{{ url_for('bookappointment') }}" class="block px-4 py-2 hover:bg-gray-700">New Appointment</a>
           <a href="{{ url_for('predict') }}" class="block px-4 py-2 hover:bg-gray-700">Face Analysis</a>
+          <a href="{{ url_for('skin_predict') }}" class="block px-4 py-2 hover:bg-gray-700">Skin Disease</a>
           <a href="{{ url_for('userappoint') }}" class="block px-4 py-2 hover:bg-gray-700">My Appointments</a>
           <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-700">Profile</a>
         {% endif %}
@@ -71,6 +72,7 @@
       {% else %}
         <li><a href="{{ url_for('bookappointment') }}" class="block md:inline-block hover:text-gray-400">New Appointment</a></li>
         <li><a href="{{ url_for('predict') }}" class="block md:inline-block hover:text-gray-400">Face Analysis</a></li>
+        <li><a href="{{ url_for('skin_predict') }}" class="block md:inline-block hover:text-gray-400">Skin Disease</a></li>
         <li><a href="{{ url_for('userappoint') }}" class="block md:inline-block hover:text-gray-400">My Appointments</a></li>
         <li><a href="{{ url_for('profile') }}" class="block md:inline-block hover:text-gray-400">Profile</a></li>
       {% endif %}
@@ -274,3 +276,4 @@
   </script>
 </body>
 </html>
+

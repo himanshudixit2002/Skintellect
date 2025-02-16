@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+  body {
+      background-color: #f7fbff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .container-main {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+  }
+  .card-custom {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      padding: 20px;
+  }
+  .result-image {
+      max-width: 100%;
+      border-radius: 8px;
+  }
+  #aiAnalysisText {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fefefe;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+  }
+</style>
+
+<div class="container-main">
+  <div class="w-100" style="max-width: 650px;">
+    <h1 class="text-center mb-4" style="color: #007BFF;">Skin Disease Prediction Result</h1>
+    <div class="card-custom">
+      <h2 class="card-title">🔬 Predicted Condition</h2>
+      <p class="fs-4 text-success" id="predictionText">{{ prediction }}</p>
+    </div>
+    <div class="card-custom">
+      <h2 class="card-title">📊 Prediction Probabilities</h2>
+      <pre id="probabilitiesText">{{ probabilities }}</pre>
+    </div>
+    <div class="card-custom">
+      <h2 class="card-title">🤖 AI Analysis</h2>
+      <div id="aiAnalysisText">{{ ai_analysis|safe }}</div>
+    </div>
+    <div class="card-custom">
+      <h2 class="card-title">🖼️ Uploaded Image</h2>
+      <img id="uploadedImage" class="result-image" src="{{ image_url }}" alt="Uploaded Skin Image">
+    </div>
+    <a href="/skin_predict" class="btn btn-primary">Try Another Image</a>
+  </div>
+</div>
+{% endblock %}
