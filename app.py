@@ -24,18 +24,42 @@ from tensorflow.keras.preprocessing import image
 # =============================================================================
 # Environment & API Configuration
 # =============================================================================
-file_id = "https://drive.google.com/file/d/1HtlPCminjDnnc9Z5LURmWKjRJxPuEHnZ/view?usp=drive_link" 
+import os
+import h5py
+import gdown
+
+# Google Drive File ID (Extracted from your link)
+file_id = "1HtlPCminjDnnc9Z5LURmWKjRJxPuEHnZ"
 file_path = "./model/skin_disease_model.h5"
-# Check if file already exists
-if not os.path.exists(file_path):
-    print("Downloading model...")
-    url = f"https://drive.google.com/uc?id={file_id}&export=download"
-    response = requests.get(url)
-    with open(file_path, "wb") as f:
-        f.write(response.content)
-    print("Download complete!")
+
+# Function to check if the file is a valid HDF5 model
+def is_valid_h5_file(filepath):
+    try:
+        with h5py.File(filepath, "r") as f:
+            return True  # File is valid
+    except OSError:
+        return False  # File is corrupt
+
+# Step 1: Check if the model file exists and is valid
+if os.path.exists(file_path) and is_valid_h5_file(file_path):
+    print("✅ Model already exists and is valid. Skipping download.")
 else:
-    print("Model already exists. Skipping download.")
+    # Step 2: If file is missing or corrupt, redownload it
+    print("❌ Model file is missing or corrupt. Downloading again...")
+    
+    # Remove the old/corrupt file before downloading
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Download the model using gdown
+    gdown.download(f"https://drive.google.com/uc?id={file_id}", file_path, quiet=False)
+
+    # Verify the downloaded file
+    if os.path.exists(file_path) and is_valid_h5_file(file_path):
+        print("✅ Model Download Complete and Verified!")
+    else:
+        print("❌ Model Download Failed or File is Still Corrupt.")
+
 
 load_dotenv()
 
