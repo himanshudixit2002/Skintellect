@@ -27,7 +27,7 @@ from tensorflow.keras.preprocessing import image
 import os
 import h5py
 import gdown
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # Google Drive File ID (Extracted from your link)
 file_id = "1HtlPCminjDnnc9Z5LURmWKjRJxPuEHnZ"
 file_path = "./model/skin_disease_model.h5"
