@@ -49,7 +49,7 @@
           <!-- For regular users, show the standard menu -->
           <a href="{{ url_for('bookappointment') }}" class="block px-4 py-2 hover:bg-gray-700">New Appointment</a>
           <a href="{{ url_for('predict') }}" class="block px-4 py-2 hover:bg-gray-700">Face Analysis</a>
-          <a href="{{ url_for('skin_predict') }}" class="block px-4 py-2 hover:bg-gray-700">Skin Disease</a>
+          <a href="{{ url_for('skin_predict') }}" class="block px-4 py-2 bg-red-400 hover:bg-red-500 text-white rounded transition duration-300">Analyse Skin Disease</a>
           <a href="{{ url_for('userappoint') }}" class="block px-4 py-2 hover:bg-gray-700">My Appointments</a>
           <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-700">Profile</a>
         {% endif %}
@@ -72,7 +72,7 @@
       {% else %}
         <li><a href="{{ url_for('bookappointment') }}" class="block md:inline-block hover:text-gray-400">New Appointment</a></li>
         <li><a href="{{ url_for('predict') }}" class="block md:inline-block hover:text-gray-400">Face Analysis</a></li>
-        <li><a href="{{ url_for('skin_predict') }}" class="block md:inline-block hover:text-gray-400">Skin Disease</a></li>
+        <li><a href="{{ url_for('skin_predict') }}" class="block md:inline-block bg-red-400 px-3 py-1 rounded hover:bg-red-500 transition duration-300">Analyse Skin Disease</a></li>
         <li><a href="{{ url_for('userappoint') }}" class="block md:inline-block hover:text-gray-400">My Appointments</a></li>
         <li><a href="{{ url_for('profile') }}" class="block md:inline-block hover:text-gray-400">Profile</a></li>
       {% endif %}
@@ -177,11 +177,6 @@
           <a href="https://www.instagram.com/himanshu.dixitt?igsh=MXExMWI4ZzIxNDA4cw==" class="hover:text-emerald-300 transition-colors"><i class="fab fa-instagram"></i></a>
           <a href="https://www.linkedin.com/in/himanshudixit2406/" class="hover:text-emerald-300 transition-colors"><i class="fab fa-linkedin"></i></a>
           <a href="https://github.com/himanshudixit2002" class="hover:text-emerald-300 transition-colors"><i class="fab fa-github"></i></a>
-        </div>
-        <div class="mt-4">
-          <div class="flex mt-2">
-            <input type="email" placeholder="Enter your email" class="p-1 text-sm rounded-l bg-blue-900/50 border border-blue-400/30">
-          </div>
         </div>
       </div>
     </div>
