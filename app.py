@@ -24,6 +24,18 @@ from tensorflow.keras.preprocessing import image
 # =============================================================================
 # Environment & API Configuration
 # =============================================================================
+file_id = "https://drive.google.com/file/d/1HtlPCminjDnnc9Z5LURmWKjRJxPuEHnZ/view?usp=drive_link" 
+file_path = "./model/skin_disease_model.h5"
+# Check if file already exists
+if not os.path.exists(file_path):
+    print("Downloading model...")
+    url = f"https://drive.google.com/uc?id={file_id}&export=download"
+    response = requests.get(url)
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+    print("Download complete!")
+else:
+    print("Model already exists. Skipping download.")
 
 load_dotenv()
 
