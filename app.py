@@ -275,14 +275,7 @@ def get_gemini_recommendations(skin_conditions):
     prompt = f"""
 You are a knowledgeable AI skincare expert. A user uploaded an image, and the following skin conditions were detected: {', '.join(skin_conditions)}.
 
-Please:
-- Explain these conditions in simple, easy-to-understand terms.
-- Recommend the best skincare ingredients for these conditions.
-- Provide a basic morning and night skincare routine.
-- Suggest 3 skincare products with pros & cons.
-- Offer 2 lifestyle tips for improved skin health.
-
-Keep your response concise, structured, and engaging. Use Markdown formatting, include emojis, and maintain a warm, friendly tone.
+Please provide a very short, simple recommendation in plain language. Briefly explain the conditions and suggest one or two key skincare ingredients or tips. Keep your response under 50 words, use a friendly tone, and avoid extra details.
 """
     
     headers = {"Content-Type": "application/json"}
@@ -305,29 +298,41 @@ Keep your response concise, structured, and engaging. Use Markdown formatting, i
         return "Failed to summarize text."
 
 def recommend_products_based_on_classes(classes):
+    """
+    For each skin condition in 'classes', this function searches the DataFrame 'df'
+    for products where the corresponding condition column is marked as 1.
+    It converts the price from USD to INR and truncates the ingredients list.
+    Finally, it calls the AI recommendation function to get a concise analysis.
+    """
     recommendations = []
     df_columns_lower = [col.lower() for col in df.columns]
     USD_TO_INR = 83  # Currency conversion rate
 
+    # Define price conversion function outside the loop
+    def convert_price(price):
+        try:
+            return round(float(price) * USD_TO_INR, 2)
+        except (ValueError, TypeError):
+            return "N/A"
+
     for skin_condition in classes:
         condition_lower = skin_condition.lower()
         if condition_lower in df_columns_lower:
+            # Get the original column name from the dataframe
             original_column = df.columns[df_columns_lower.index(condition_lower)]
-            filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]]
-
-            def convert_price(price):
-                try:
-                    return round(float(price) * USD_TO_INR, 2)
-                except ValueError:
-                    return "N/A"
+            # Filter products where the condition column is 1 and work on a copy to avoid warnings
+            filtered = df[df[original_column] == 1][["Brand", "Name", "Price", "Ingredients"]].copy()
+            # Convert the Price column
             filtered["Price"] = filtered["Price"].apply(convert_price)
+            # Truncate Ingredients to the first 5 items (if string)
             filtered["Ingredients"] = filtered["Ingredients"].apply(
-                lambda x: ", ".join(x.split(", ")[:5])
+                lambda x: ", ".join(x.split(", ")[:5]) if isinstance(x, str) else ""
             )
             products = filtered.head(5).to_dict(orient="records")
         else:
             products = []
         
+        # Get a short AI analysis for the current skin condition
         ai_analysis = get_gemini_recommendations([skin_condition])
         recommendations.append({
             "condition": skin_condition,
@@ -335,6 +340,7 @@ def recommend_products_based_on_classes(classes):
             "ai_analysis": ai_analysis
         })
     return recommendations
+
 
 def generate_skincare_routine(user_details):
     prompt_template = """

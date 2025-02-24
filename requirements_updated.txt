@@ -23,3 +23,5 @@ langchain
 langchain-community 
 python-dotenv
 markdown
+h5py
+gdown
