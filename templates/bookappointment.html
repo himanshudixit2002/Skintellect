@@ -25,114 +25,101 @@
   /* Chat Container */
   .chat-container {
       max-width: 800px;
-      margin: 2rem auto;
+      margin: 1rem auto;
       background: rgba(255, 255, 255, 0.97);
-      border-radius: 16px;
+      border-radius: 12px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      padding: 10px;
   }
   
   .chat-header {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       color: #fff;
-      padding: 1.5rem;
+      padding: 1.2rem;
       text-align: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   .chat-header h2 {
       margin: 0;
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 600;
   }
   .chat-header p {
-      margin: 0.5rem 0 0;
-      font-size: 1rem;
+      margin: 0.3rem 0 0;
+      font-size: 0.9rem;
       opacity: 0.9;
   }
   
   /* Chat Messages */
   .chat-messages {
       flex: 1;
-      padding: 1.5rem;
+      padding: 1rem;
       overflow-y: auto;
       background: #f9f9f9;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
   }
+
   .chat-message {
-      margin-bottom: 1.5rem;
-      padding: 1.2rem;
-      border-radius: 20px;
-      max-width: 75%;
-      min-width: 300px;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 16px;
+      max-width: 80%;
       word-wrap: break-word;
-      animation: fadeIn 0.3s ease;
-      position: relative;
-      padding-left: 70px;
       font-size: 0.95rem;
       line-height: 1.5;
   }
+
+  /* Bot Messages */
   .chat-message.bot {
       background: linear-gradient(145deg, #ffffff, #f3f4ff);
       color: #1a237e;
       align-self: flex-start;
-      border-radius: 20px 20px 20px 0;
+      border-radius: 16px 16px 16px 0;
       box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
-      margin-left: 70px;
-      padding: 20px;
-      transition: transform 0.2s ease;
+      padding: 15px;
+      position: relative;
   }
-  .chat-message.bot:hover {
-      transform: translateX(5px);
-  }
+
   .chat-message.bot::before {
       content: '';
       position: absolute;
-      left: -55px;
+      left: -45px;
       top: 50%;
       transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       background: url('/static/assets/bot.png') no-repeat center;
       background-size: contain;
-      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
   }
+
+  /* User Messages */
   .chat-message.user {
       background: #6366f1;
       color: #fff;
       align-self: flex-end;
-      border-radius: 20px 20px 0 20px;
+      border-radius: 16px 16px 0 16px;
+      padding: 12px;
       margin-right: 10px;
-      position: relative;
-  }
-  .chat-message.user::after {
-      content: '';
-      position: absolute;
-      right: -10px;
-      bottom: 0;
-      width: 0;
-      height: 0;
-      border-left: 10px solid #6366f1;
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-  }
-  @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      word-break: break-word;
   }
 
   /* Chat Input Area */
   .chat-input-area {
       display: flex;
-      padding: 1rem;
+      padding: 0.8rem;
       border-top: 1px solid #ddd;
       background: #fff;
   }
   .chat-input-area input {
       flex: 1;
-      padding: 0.8rem 1rem;
+      padding: 0.8rem;
       border: 1px solid #ddd;
-      border-radius: 30px;
+      border-radius: 24px;
       outline: none;
       font-size: 1rem;
       transition: border 0.3s ease;
@@ -144,9 +131,9 @@
       background: #6366f1;
       color: #fff;
       border: none;
-      padding: 0.8rem 1.2rem;
+      padding: 0.8rem 1rem;
       margin-left: 0.5rem;
-      border-radius: 30px;
+      border-radius: 24px;
       cursor: pointer;
       font-size: 1rem;
       transition: background 0.3s ease, transform 0.2s ease;
@@ -156,42 +143,20 @@
       transform: scale(1.05);
   }
   
-  /* Typing Indicator */
-  .typing-indicator {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1rem;
-  }
-  .typing-indicator span {
-      width: 8px;
-      height: 8px;
-      background: #6366f1;
-      border-radius: 50%;
-      margin-right: 4px;
-      animation: blink 1s infinite alternate;
-  }
-  .typing-indicator span:nth-child(2) {
-      animation-delay: 0.2s;
-  }
-  .typing-indicator span:nth-child(3) {
-      animation-delay: 0.4s;
-  }
-  @keyframes blink {
-      from { opacity: 0.3; }
-      to { opacity: 1; }
-  }
-  
   /* Responsive Adjustments */
   @media (max-width: 600px) {
       .chat-container {
-          margin: 1rem;
-          border-radius: 12px;
+          margin: 0.5rem;
+          border-radius: 10px;
       }
       .chat-header h2 {
-          font-size: 1.5rem;
+          font-size: 1.3rem;
       }
       .chat-header p {
-          font-size: 0.9rem;
+          font-size: 0.85rem;
+      }
+      .chat-messages {
+          height: 350px;
       }
       .chat-input-area input, .chat-input-area button {
           font-size: 0.9rem;
@@ -207,13 +172,7 @@
   </div>
   <div class="chat-messages" id="chatMessages">
     <div class="chat-message bot">
-      <div class="message-header">
-          <img src="/static/assets/bot.png" alt="Assistant" class="bot-avatar">
-          <h3>Skintellect Assistant</h3>
-      </div>
-      <div class="message-content">
-          <p>Hello! I'm here to help with your skincare needs and appointments. How can I assist you today?</p>
-      </div>
+      <p>Hello! I'm here to help with your skincare needs and appointments. How can I assist you today?</p>
     </div>
   </div>
   <div class="chat-input-area">
@@ -228,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // Append a chat message to the conversation
+    // Append a chat message
     function appendMessage(text, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('chat-message', sender);
@@ -237,21 +196,21 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Show a typing indicator when the bot is "thinking"
+    // Show typing indicator
     function showTypingIndicator() {
         const typingDiv = document.createElement('div');
         typingDiv.classList.add('chat-message', 'bot');
         typingDiv.id = 'typingIndicator';
         typingDiv.innerHTML = `<div class="typing-indicator">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                    <span>.</span>
+                                    <span>.</span>
+                                    <span>.</span>
                                 </div>`;
         chatMessages.appendChild(typingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Remove the typing indicator
+    // Remove typing indicator
     function removeTypingIndicator() {
         const typingDiv = document.getElementById('typingIndicator');
         if (typingDiv) {
@@ -259,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Send a message to the backend chatbot endpoint
+    // Send message to bot
     async function sendMessage() {
         const message = chatInput.value.trim();
         if (!message) return;
@@ -276,30 +235,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ userInput: message })
             });
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
+
             const data = await response.json();
             removeTypingIndicator();
-
-            if (data.error) {
-                appendMessage("Sorry, something went wrong. Please try again.", 'bot');
-            } else {
-                // Display the bot reply (appointment_flow, confirmation, or general response)
-                appendMessage(data.botReply, 'bot');
-            }
+            appendMessage(data.botReply || "I'm here to assist!", 'bot');
         } catch (error) {
             console.error('Error:', error);
             removeTypingIndicator();
-            appendMessage("Sorry, I'm having trouble connecting. Please try again.", 'bot');
+            appendMessage("Error connecting. Try again!", 'bot');
         }
     }
 
-    // Event listeners for sending a message
     sendBtn.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            e.preventDefault();
             sendMessage();
         }
     });
