@@ -29,7 +29,8 @@
       right: 20px;
       width: 60px;
       height: 60px;
-      background: #0f766e; /* Dark emerald */
+      background: url("{{ url_for('static', filename='assets/bot.png') }}") no-repeat center/65%;
+      background-color: rgba(16, 185, 129, 0.9);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -37,18 +38,38 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
       cursor: pointer;
-      z-index: 100;
+      z-index: 1000;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-      border: 2px solid rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transform: translateZ(0);
     }
     .chat-widget:hover {
-      width: 95%;
-      max-width: 380px;
+      width: calc(100% - 40px);
+      max-width: 400px;
       height: 70vh;
       max-height: 500px;
       border-radius: 18px;
-      background: rgba(16, 185, 129, 0.95); /* Slightly transparent emerald */
+      background: rgba(16, 185, 129, 0.95);
       backdrop-filter: blur(12px);
+      right: 20px;
+      left: auto;
+      transform: translateZ(0) scale(1);
+    }
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .chat-widget {
+        bottom: 15px;
+        right: 15px;
+      }
+      .chat-widget:hover {
+        width: calc(100% - 30px);
+        max-width: none;
+        bottom: 15px;
+        right: 15px;
+      }
+      .chat-content {
+        border-radius: 12px;
+      }
     }
     .chat-content {
       opacity: 0;
