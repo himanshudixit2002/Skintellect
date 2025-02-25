@@ -3,23 +3,166 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}My Flask App{% endblock %}</title>
+  <title>{% block title %}My Flask App - Skin Analysis Chat{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    /* Global Reset & Fonts */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      overflow-x: hidden;
-      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{{ url_for('static', filename='assets/bg5.webp') }}");
+      /* Dark gradient background that complements skin analysis */
+      background-image: linear-gradient(
+          rgba(49, 46, 129, 0.9),
+          rgba(30, 64, 175, 0.9)
+        ),
+        url("{{ url_for('static', filename='assets/bg5.webp') }}");
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
       background-attachment: fixed;
       padding-top: 80px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    /* Auto-Expand Chat Widget */
+    .chat-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: #0f766e; /* Dark emerald */
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    .chat-widget:hover {
+      width: 95%;
+      max-width: 380px;
+      height: 70vh;
+      max-height: 500px;
+      border-radius: 18px;
+      background: rgba(16, 185, 129, 0.95); /* Slightly transparent emerald */
+      backdrop-filter: blur(12px);
+    }
+    .chat-content {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.98);
+    }
+    .chat-widget:hover .chat-content {
+      opacity: 1;
+    }
+    .chat-header {
+      background: linear-gradient(to right, #0f766e, #1d4ed8);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .chat-header i {
+      font-size: 1.4rem;
+      color: #ccfbf1;
+    }
+    .chat-messages {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      background: #f8fafc;
+    }
+    .message {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .message-bot .avatar {
+      background: #0f766e;
+    }
+    .message-user {
+      flex-direction: row-reverse;
+    }
+    .message-user .avatar {
+      background: #1d4ed8;
+    }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar img {
+      width: 24px;
+      height: 24px;
+    }
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    .message-bot .bubble {
+      background: white;
+      color: #0f766e;
+      border: 1px solid #ccfbf1;
+      border-radius: 16px 16px 16px 4px;
+    }
+    .message-user .bubble {
+      background: #1d4ed8;
+      color: white;
+      border-radius: 16px 16px 4px 16px;
+    }
+    .chat-input {
+      border-top: 1px solid #e2e8f0;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      background: white;
+    }
+    .chat-input input {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    .chat-input input:focus {
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+    .chat-input button {
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chat-input button:hover {
+      background: #1e40af;
+      transform: translateY(-1px);
+    }
+    /* Always visible chat icon change to match brand logo */
+    .chat-widget > i {
+      display: none;
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -131,59 +274,30 @@
     {% block content %}{% endblock %}
   </div>
 
-  <!-- Chatbot Interface (initially hidden) -->
-  <div id="chat-container" class="hidden fixed bottom-0 right-0 md:bottom-4 md:right-4 w-full md:w-96 h-[70vh] md:h-[60vh] bg-white shadow-xl rounded-t-2xl md:rounded-lg transition-all duration-300 ease-out z-50">
-    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-t-2xl md:rounded-t-lg flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="relative">
-          <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <i class="fas fa-robot text-emerald-500"></i>
-          </div>
-          <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-400 rounded-full"></span>
-        </div>
-        <div>
-          <h3 class="font-semibold">Skin Health Assistant</h3>
-          <p class="text-xs opacity-75">AI-powered dermatology support</p>
+  <!-- Auto-Expand Chat Widget -->
+  <div class="chat-widget">
+    <!-- Replace always visible icon with the brand leaf logo -->
+    <i class="fa-solid fa-leaf text-white text-2xl"></i>
+    <div class="chat-content flex flex-col">
+      <div class="chat-header">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-leaf text-xl md:text-2xl text-emerald-100 flex-shrink-0"></i>
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-50 to-blue-100 font-semibold text-sm md:text-base">
+            Skintellect Assistant
+          </span>
         </div>
       </div>
-      <button id="close-chat" class="p-1 hover:bg-white/10 rounded-full transition-colors">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="flex flex-col h-[calc(100%-136px)]">
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="chat-message bot-message animate-fade-in">
-          <div class="bg-emerald-50 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%]">
-            <p class="text-sm text-emerald-900">Hello! I'm your AI skin health assistant. How can I help you today?</p>
-            <span class="text-xs text-emerald-500 mt-1 block">11:42 AM</span>
-          </div>
+      <div class="chat-messages" id="hoverChatMessages">
+        <div class="mb-2">
+          <span class="text-sm text-gray-700">Hello! How can I help you today?</span>
         </div>
       </div>
-      
-      <div class="border-t border-emerald-100 p-4 bg-white">
-        <div class="flex items-center space-x-2">
-          <div class="typing-indicator hidden items-center space-x-2 px-4">
-            <div class="dot animate-bounce"></div>
-            <div class="dot animate-bounce delay-100"></div>
-            <div class="dot animate-bounce delay-200"></div>
-          </div>
-          <input type="text" id="user-input"
-                 class="flex-1 border-2 border-emerald-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-200 focus:ring-2 focus:ring-emerald-50 transition-all"
-                 placeholder="Type your skin concern...">
-          <button id="send-btn" class="bg-emerald-500 text-white p-3 rounded-2xl hover:bg-emerald-600 transition-colors shadow-md">
-            <i class="fas fa-paper-plane"></i>
-          </button>
-        </div>
-        <p class="text-xs text-gray-400 mt-2 px-2">Have a Nice Day!</p>
+      <div class="chat-input">
+        <input type="text" id="hoverChatInput" placeholder="Type a message..." />
+        <button id="hoverSendBtn">Send</button>
       </div>
     </div>
   </div>
-
-  <!-- Floating Action Button for Chat -->
-  <button id="open-chat" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-500 text-white shadow-lg z-50 hover:bg-emerald-600 transition-all hover:scale-105">
-    <i class="fas fa-comment-dots text-xl"></i>
-  </button>
 
   <!-- Footer -->
   <footer class="bg-gray-900 text-gray-300 py-8 mt-12 border-t border-gray-700">
@@ -254,78 +368,38 @@
       menu.classList.toggle("hidden");
     });
 
-    // Chat widget functionality
+    // Auto-Expand Chat Widget functionality
     document.addEventListener('DOMContentLoaded', () => {
-      const chatContainer = document.getElementById('chat-container');
-      const chatMessages = document.getElementById('chat-messages');
-      const userInput = document.getElementById('user-input');
-      const sendBtn = document.getElementById('send-btn');
-      const closeBtn = document.getElementById('close-chat');
-      const openChatBtn = document.getElementById('open-chat');
+      const hoverSendBtn = document.getElementById('hoverSendBtn');
+      const hoverChatInput = document.getElementById('hoverChatInput');
+      const hoverChatMessages = document.getElementById('hoverChatMessages');
       
-      async function sendMessage() {
-        const message = userInput.value.trim();
-        if (!message) return;
-  
-        // Add user message to chat window
-        chatMessages.innerHTML += `
-          <div class="flex justify-end">
-            <div class="bg-emerald-100 p-3 rounded-lg max-w-xs">
-              <p class="text-sm">${message}</p>
+      hoverSendBtn.addEventListener('click', () => {
+        const message = hoverChatInput.value.trim();
+        if (message) {
+          // Create user message
+          const userMsgDiv = document.createElement('div');
+          userMsgDiv.className = 'message message-user flex justify-end items-start gap-3';
+          userMsgDiv.innerHTML = `
+            <div class="avatar">
+              <img src="{{ url_for('static', filename='assets/user.png') }}" alt="User">
             </div>
-          </div>
-        `;
-        
-        // Clear the input and scroll to bottom
-        userInput.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-        try {
-          const response = await fetch('/chatbot', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userInput: message })
-          });
-          const data = await response.json();
-          // Add bot reply to chat window
-          chatMessages.innerHTML += `
-            <div class="flex justify-start">
-              <div class="bg-gray-100 p-3 rounded-lg max-w-xs">
-                <p class="text-sm">${data.botReply || "I'm sorry, I didn't understand that."}</p>
-              </div>
-            </div>
+            <div class="bubble">${message}</div>
           `;
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-        } catch (error) {
-          chatMessages.innerHTML += `
-            <div class="flex justify-start">
-              <div class="bg-red-100 p-3 rounded-lg max-w-xs">
-                <p class="text-sm">Error: Could not send message</p>
-              </div>
+          // For demo, add a simple bot response immediately
+          const botMsgDiv = document.createElement('div');
+          botMsgDiv.className = 'message message-bot flex items-start gap-3';
+          botMsgDiv.innerHTML = `
+            <div class="avatar">
+              <img src="{{ url_for('static', filename='assets/bot.png') }}" alt="Bot">
             </div>
+            <div class="bubble">Thank you for your message. Our team will respond shortly.</div>
           `;
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-          console.error(error);
+          hoverChatMessages.appendChild(userMsgDiv);
+          hoverChatMessages.appendChild(botMsgDiv);
+          hoverChatInput.value = '';
+          hoverChatMessages.scrollTop = hoverChatMessages.scrollHeight;
         }
-      }
-      
-      sendBtn.addEventListener('click', sendMessage);
-      
-      userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-      
-      closeBtn.addEventListener('click', () => {
-        chatContainer.classList.add('hidden');
-        openChatBtn.classList.remove('hidden');
-      });
-      
-      openChatBtn.addEventListener('click', () => {
-        chatContainer.classList.remove('hidden');
-        openChatBtn.classList.add('hidden');
       });
     });
   </script>
