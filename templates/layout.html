@@ -101,9 +101,17 @@
             <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
           </a>
         {% else %}
-          <a href="{{ url_for('bookappointment') }}" class="flex items-center text-gray-300 hover:text-white px-3 py-2 rounded-md transition-colors duration-300">
-            <i class="fas fa-calendar-plus mr-2"></i>Virtual Assistant
-          </a>
+        <a href="{{ url_for('bookappointment') }}" class="group relative overflow-hidden bg-gradient-to-r from-blue-400 to-purple-500 hover:from-purple-500 hover:to-blue-400 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:shadow-xl">
+          <i class="fas fa-robot mr-2 animate-bounce"></i>
+          <span class="relative z-10">AI Skin Assistant</span>
+          <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute -right-4 top-0 h-full w-12 bg-white/20 transform skew-x-12 transition-all group-hover:right-0"></div>
+          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="w-4 h-4 bg-white/20 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-4 h-4 bg-white/20 rounded-full animate-bounce mx-2" style="animation-delay: 0.2s"></div>
+            <div class="w-4 h-4 bg-white/20 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+          </div>
+        </a>
           <a href="{{ url_for('predict') }}" class="flex items-center text-gray-300 hover:text-white px-3 py-2 rounded-md transition-colors duration-300">
             <i class="fas fa-camera-retro mr-2"></i>Face Analysis
           </a>
