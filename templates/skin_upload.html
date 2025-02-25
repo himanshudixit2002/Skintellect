@@ -3,7 +3,8 @@
 {% block content %}
 <style>
   body {
-      background-color: #f7fbff;
+      /* Dark gradient background matching your theme */
+      background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .container-main {
@@ -68,24 +69,23 @@
       margin-bottom: 20px;
       padding: 20px;
   }
-  /* Added styling for the pre element to wrap text */
   pre {
       white-space: pre-wrap;
       word-wrap: break-word;
-      max-height: 300px; /* Adjust height as needed */
+      max-height: 300px;
       overflow-y: auto;
   }
 </style>
 
 <div class="container-main">
-  <div class="w-100" style="max-width: 650px;">
-    <h1 class="text-center mb-4" style="color: #007BFF;">Skin Disease Prediction</h1>
+  <div class="w-full" style="max-width: 650px;">
+    <h1 class="text-center mb-4 text-4xl font-bold" style="color: #007BFF;">Skin Disease Prediction</h1>
     <form id="uploadForm" method="post" enctype="multipart/form-data">
       <div class="upload-box" id="uploadBox">
         <input id="fileInput" type="file" name="image" accept="image/*" required>
-        <h3>Drag & Drop or Click to Upload</h3>
-        <p>Supported formats: JPG, PNG</p>
-        <p class="file-size-note">Max size: 2MB</p>
+        <h3 class="text-2xl font-semibold">Drag & Drop or Click to Upload</h3>
+        <p class="text-gray-600">Supported formats: JPG, PNG</p>
+        <p class="file-size-note text-gray-500">Max size: 2MB</p>
       </div>
       <div class="text-center">
         <button class="btn-blue" type="submit">Predict Disease</button>
@@ -95,22 +95,22 @@
 
     <div id="resultsSection" class="results-section">
       <div class="card-custom">
-        <h2 class="card-title">🔬 Predicted Condition</h2>
-        <p class="fs-4 text-success" id="predictionText">...</p>
+        <h2 class="card-title text-2xl font-bold mb-2">🔬 Predicted Condition</h2>
+        <p class="fs-4 text-green-600" id="predictionText">...</p>
       </div>
       <div class="card-custom">
-        <h2 class="card-title">📊 Prediction Probabilities</h2>
+        <h2 class="card-title text-2xl font-bold mb-2">📊 Prediction Probabilities</h2>
         <pre id="probabilitiesText">...</pre>
       </div>
       <div class="card-custom">
-        <h2 class="card-title">🤖 AI Analysis</h2>
+        <h2 class="card-title text-2xl font-bold mb-2">🤖 AI Analysis</h2>
         <pre id="aiAnalysisText">...</pre>
       </div>
       <div class="card-custom">
-        <h2 class="card-title">🖼️ Uploaded Image</h2>
-        <img id="uploadedImage" class="annotated-img" src="" alt="Uploaded Skin Image" style="display: none;">
+        <h2 class="card-title text-2xl font-bold mb-2">🖼️ Uploaded Image</h2>
+        <img id="uploadedImage" class="result-image" src="" alt="Uploaded Skin Image" style="display: none;">
       </div>
-      <a href="/skin_predict" class="btn btn-blue">Try Another Image</a>
+      <a href="/skin_predict" class="btn-blue block text-center">Try Another Image</a>
     </div>
   </div>
 </div>

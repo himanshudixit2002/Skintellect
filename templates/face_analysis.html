@@ -4,7 +4,7 @@
 <style>
   /* Global Styling */
   body {
-      background-color: #f7fbff;
+      background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .container-main {
@@ -99,7 +99,7 @@
       margin-top: 20px;
       transition: opacity 0.5s;
   }
-
+  
   /* Recommendation Styling */
   .recommendation-card {
       margin-bottom: 15px;
@@ -111,14 +111,16 @@
 </style>
 
 <div class="container-main">
-  <div class="w-100" style="max-width: 650px;">
-    <h1 class="text-center mb-4" style="color: #007BFF;">AI Skin Analysis</h1>
+  <div class="w-full" style="max-width: 650px;">
+    <h1 class="text-center mb-4 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
+      AI Skin Analysis
+    </h1>
     
     <!-- Upload Form -->
     <form id="uploadForm" method="post" enctype="multipart/form-data">
       <div class="upload-box" id="uploadBox">
         <input id="fileInput" type="file" name="image" accept="image/*" required>
-        <h3>Drag & Drop or Click to Upload</h3>
+        <h3 class="text-2xl font-semibold">Drag & Drop or Click to Upload</h3>
         <p>Supported formats: JPG, PNG</p>
         <p class="file-size-note">Max size: 2MB</p>
         <p id="fileFeedback" class="feedback" style="display: none;"></p>
@@ -205,9 +207,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function renderResults(data) {
         resultsSection.style.display = "block";
-        conditionsList.innerHTML = "........";
-        recommendationsContainer.innerHTML = ".........";
-        aiAnalysis.textContent = data.ai_analysis || "........";
+        conditionsList.innerHTML = "";
+        recommendationsContainer.innerHTML = "";
+        aiAnalysis.textContent = data.ai_analysis || "No analysis available.";
 
         data.classes.forEach(condition => {
             const li = document.createElement("li");

@@ -3,59 +3,55 @@
 {% block content %}
 <style>
   body {
-      background-color: #f7fbff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  .container-main {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-  }
-  .card-custom {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      padding: 20px;
+    /* Dark gradient background matching your site theme */
+    background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   .result-image {
-      max-width: 100%;
-      border-radius: 8px;
+    max-width: 100%;
+    border-radius: 0.5rem;
   }
   #aiAnalysisText {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-      background: #fefefe;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #fefefe;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
   }
 </style>
 
-<div class="container-main">
-  <div class="w-100" style="max-width: 650px;">
-    <h1 class="text-center mb-4" style="color: #007BFF;">Skin Disease Prediction Result</h1>
-    <div class="card-custom">
-      <h2 class="card-title">🔬 Predicted Condition</h2>
-      <p class="fs-4 text-success" id="predictionText">{{ prediction }}</p>
+<div class="min-h-screen flex items-center justify-center px-4 py-16">
+  <div class="w-full max-w-xl bg-white/90 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+    <h1 class="text-center mb-6 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
+      Skin Disease Prediction Result
+    </h1>
+    
+    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
+      <h2 class="text-2xl font-bold mb-2">🔬 Predicted Condition</h2>
+      <p class="text-xl text-green-600" id="predictionText">{{ prediction }}</p>
     </div>
-    <div class="card-custom">
-      <h2 class="card-title">📊 Prediction Probabilities</h2>
+    
+    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
+      <h2 class="text-2xl font-bold mb-2">📊 Prediction Probabilities</h2>
       <pre id="probabilitiesText">{{ probabilities }}</pre>
     </div>
-    <div class="card-custom">
-      <h2 class="card-title">🤖 AI Analysis</h2>
+    
+    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
+      <h2 class="text-2xl font-bold mb-2">🤖 AI Analysis</h2>
       <div id="aiAnalysisText">{{ ai_analysis|safe }}</div>
     </div>
-    <div class="card-custom">
-      <h2 class="card-title">🖼️ Uploaded Image</h2>
+    
+    <div class="mb-6 p-4 rounded-lg shadow-md bg-white">
+      <h2 class="text-2xl font-bold mb-2">🖼️ Uploaded Image</h2>
       <img id="uploadedImage" class="result-image" src="{{ image_url }}" alt="Uploaded Skin Image">
     </div>
-    <a href="/skin_predict" class="btn btn-primary">Try Another Image</a>
+    
+    <a href="/skin_predict" class="block text-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all">
+      Try Another Image
+    </a>
   </div>
 </div>
 {% endblock %}

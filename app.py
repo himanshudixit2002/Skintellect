@@ -1045,6 +1045,14 @@ Keep your response concise, structured, and engaging. Use Markdown formatting, i
     else:
         return "Failed to get a valid response from the AI service."
 
+@app.route("/privacy_policy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
+
+@app.route("/terms_of_service")
+def terms_of_service():
+    return render_template("terms_of_service.html")
+
 @app.route("/skin_predict", methods=["GET", "POST"])
 def skin_predict():
     if request.method == "POST":
