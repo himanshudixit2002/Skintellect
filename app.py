@@ -713,6 +713,10 @@ def profile():
             return render_template("profile.html", survey=survey_response, routine=routine)
     return redirect(url_for("index"))
 
+@app.route("/documentation")
+def documentation():
+    return render_template("documentation.html")
+
 # --- Appointment & Doctor Dashboard Routes ---
 @app.route("/appointment/<int:appointment_id>")
 def appointment_detail(appointment_id):

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skintellect Documentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #2C3E50;  /* Dark blue-gray for a professional tone */
+      --accent-color: #2980B9;   /* Complementary blue accent */
+      --bg-color: #F4F7F6;       /* Light background */
+      --text-color: #333;        /* Standard dark text */
+      --light-gray: #BDC3C7;     /* Neutral light gray for dividers and borders */
+      --code-bg: #ECF0F1;        /* Subtle background for code blocks */
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      color: #fff;
+      padding: 40px 20px;
+      text-align: center;
+      position: relative;
+    }
+    header h1 {
+      font-size: 2.8em;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    header .contact-info {
+      font-style: italic;
+      font-size: 0.9em;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 20px;
+      border-style: solid;
+      border-color: var(--bg-color) transparent transparent transparent;
+    }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 60px auto 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2, h3, h4 {
+      color: var(--primary-color);
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 2em;
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }
+    h3 {
+      font-size: 1.6em;
+      margin-top: 15px;
+    }
+    p {
+      margin-bottom: 15px;
+    }
+    ul, ol {
+      margin-bottom: 15px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    code {
+      background-color: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+    }
+    pre {
+      background-color: var(--code-bg);
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.95em;
+      line-height: 1.5;
+    }
+    .section-divider {
+      margin: 40px 0;
+      border-top: 2px dashed var(--light-gray);
+    }
+    /* Sidebar Table of Contents */
+    .toc {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
+    }
+    .toc h4 {
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    .toc ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .toc ul li {
+      margin-bottom: 8px;
+    }
+    .toc ul li a {
+      text-decoration: none;
+      color: var(--primary-color);
+      transition: color 0.3s ease;
+    }
+    .toc ul li a:hover {
+      color: var(--accent-color);
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      header {
+        padding: 30px 10px;
+      }
+      header::after {
+        border-width: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Skintellect Documentation</h1>
+    <p>Empowering Skincare Through Intelligent Analysis</p>
+    <div class="contact-info">
+      Himanshu Dixit | himanshudixit2406@gmail.com | +917390922922
+    </div>
+  </header>
+  <div class="container">
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <h4>Table of Contents</h4>
+      <ul>
+        <li><a href="#project-overview">Project Overview</a></li>
+        <li><a href="#key-features">Key Features</a></li>
+        <li><a href="#tech-stack">Technology Stack</a></li>
+        <li><a href="#installation-usage">Installation &amp; Usage</a></li>
+        <li><a href="#api-documentation">API Documentation</a></li>
+        <li><a href="#system-architecture">System Architecture</a></li>
+        <li><a href="#database-schema">Database Schema</a></li>
+        <li><a href="#ai-ml-details">AI/ML Model Details</a></li>
+        <li><a href="#deployment-guide">Deployment Guide</a></li>
+        <li><a href="#security-monitoring">Security &amp; Monitoring</a></li>
+        <li><a href="#faqs">FAQs</a></li>
+        <li><a href="#competitive-analysis">Competitive Analysis</a></li>
+        <li><a href="#branding-styling">Branding &amp; Styling</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+      </ul>
+    </nav>
+
+    <section id="project-overview">
+      <h2>1. Project Overview</h2>
+      <p>Skintellect is an AI-driven skincare analysis platform that leverages advanced image processing and machine learning techniques to provide personalized skincare recommendations. It seamlessly integrates a user-friendly interface with robust backend services, making advanced dermatological analysis accessible to everyone.</p>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="key-features">
+      <h2>2. Key Features</h2>
+      <ul>
+        <li><strong>AI-Powered Skin Analysis:</strong>
+          <ul>
+            <li>Utilizes a custom Convolutional Neural Network (CNN) combined with YOLOv8 for precise detection of skin conditions.</li>
+            <li>Delivers real-time, detailed metrics with confidence scores.</li>
+          </ul>
+        </li>
+        <li><strong>Personalized Recommendations:</strong>
+          <ul>
+            <li>Matches skin concerns with a curated database of skincare products.</li>
+            <li>Delivers tailored suggestions using a hybrid recommendation engine.</li>
+          </ul>
+        </li>
+        <li><strong>Image-Based Assessments:</strong>
+          <ul>
+            <li>Intuitive interface for uploading or capturing images.</li>
+            <li>Visual annotations highlight areas of concern with descriptive analysis.</li>
+          </ul>
+        </li>
+        <li><strong>Appointment Booking:</strong>
+          <ul>
+            <li>Integrated scheduling system for booking consultations with dermatologists.</li>
+            <li>Automated notifications and reminders for appointments.</li>
+          </ul>
+        </li>
+        <li><strong>User Profile Management:</strong>
+          <ul>
+            <li>Secure account management and profile editing.</li>
+            <li>Tracks analysis history, recommendations, and appointment records.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="tech-stack">
+      <h2>3. Technology Stack</h2>
+      <h3>Backend &amp; API</h3>
+      <ul>
+        <li><strong>Framework:</strong> FastAPI with Uvicorn for asynchronous, high-performance API handling.</li>
+        <li><strong>Language:</strong> Python (3.9+)</li>
+        <li><strong>Authentication:</strong> JWT-based secure authentication with bcrypt hashing.</li>
+      </ul>
+      <h3>Machine Learning</h3>
+      <ul>
+        <li><strong>Models:</strong>
+          <ul>
+            <li>Custom CNN built with TensorFlow/Keras using EfficientNet for feature extraction.</li>
+            <li>YOLOv8 for object and lesion detection.</li>
+          </ul>
+        </li>
+        <li><strong>Training:</strong> Trained on over 10,000 labeled skin images with extensive data augmentation.</li>
+      </ul>
+      <h3>Database</h3>
+      <ul>
+        <li><strong>Primary Storage:</strong> PostgreSQL managed via SQLAlchemy.</li>
+        <li><strong>Caching:</strong> Redis for session management and fast query caching.</li>
+      </ul>
+      <h3>Frontend</h3>
+      <ul>
+        <li><strong>Mobile Application:</strong> Developed in Flutter for cross-platform compatibility.</li>
+        <li><strong>Web Interface:</strong> React integrated with Jinja2 templating when needed.</li>
+      </ul>
+      <h3>Infrastructure &amp; Deployment</h3>
+      <ul>
+        <li><strong>Containerization:</strong> Docker for reliable and reproducible builds.</li>
+        <li><strong>Orchestration:</strong> Kubernetes for scalable production deployments.</li>
+        <li><strong>Cloud Services:</strong> AWS (EC2, RDS, S3) or equivalent providers.</li>
+        <li><strong>CI/CD:</strong> Automated pipelines using GitHub Actions for testing and deployments.</li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="installation-usage">
+      <h2>4. Installation &amp; Usage</h2>
+      <h3>4.1. Installation</h3>
+      <ol>
+        <li>
+          <strong>Clone the Repository &amp; Set Up Environment</strong>
+          <pre><code>git clone https://github.com/yourusername/Skintellect.git
+cd Skintellect
+python -m venv venv
+source venv/bin/activate   # (On Windows: venv\Scripts\activate)
+pip install -r requirements.txt</code></pre>
+        </li>
+        <li>
+          <strong>Configure Environment Variables</strong>
+          <p>Create a <code>.env</code> file with the following:</p>
+          <ul>
+            <li><code>DATABASE_URL</code> (e.g., <code>postgresql://user:pass@localhost:5432/skintellect</code>)</li>
+            <li><code>SECRET_KEY</code> (secure, random string)</li>
+            <li><code>MODEL_PATH</code> (custom path for ML model if needed)</li>
+            <li><code>ENV</code> (set to <code>development</code> for testing)</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Database Setup</strong>
+          <p>Run migrations (using Alembic or provided scripts):</p>
+          <pre><code>alembic upgrade head</code></pre>
+          <p>Optionally, seed the database:</p>
+          <pre><code>python scripts/seed_data.py</code></pre>
+        </li>
+      </ol>
+      <h3>4.2. Usage</h3>
+      <ol>
+        <li>
+          <strong>Start the Backend</strong>
+          <pre><code>uvicorn app.main:app --reload --host 0.0.0.0 --port 8000</code></pre>
+          <p>Access the interactive API docs at <code>http://localhost:8000/docs</code>.</p>
+        </li>
+        <li>
+          <strong>Mobile App Setup</strong>
+          <ol>
+            <li>Navigate to the mobile app directory: <code>cd mobile_app</code></li>
+            <li>Install dependencies: <code>flutter pub get</code></li>
+            <li>Configure the API endpoint (e.g., in <code>api_config.dart</code>).</li>
+            <li>Run the app: <code>flutter run</code></li>
+          </ol>
+        </li>
+        <li>
+          <strong>Basic Workflow</strong>
+          <ul>
+            <li><strong>Registration &amp; Login:</strong> Create an account via the app or API endpoints (<code>/auth/register</code> and <code>/auth/login</code>).</li>
+            <li><strong>Image Analysis:</strong> Upload a skin image via <code>POST /analysis</code> to receive analysis results.</li>
+            <li><strong>Recommendations:</strong> Access personalized skincare suggestions through <code>/recommendations</code>.</li>
+            <li><strong>Appointments:</strong> Book consultations using the <code>/appointments</code> endpoint.</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="api-documentation">
+      <h2>5. API Documentation</h2>
+      <p>The RESTful API is defined using OpenAPI 3.0 specifications. Key endpoints include:</p>
+      <h3>Authentication</h3>
+      <ul>
+        <li>
+          <strong>POST /auth/register:</strong>
+          <p>Creates a new user account with JSON data (<code>name</code>, <code>email</code>, <code>password</code>).</p>
+        </li>
+        <li>
+          <strong>POST /auth/login:</strong>
+          <p>Authenticates users and returns a JWT token.</p>
+        </li>
+      </ul>
+      <h3>Skin Analysis</h3>
+      <ul>
+        <li>
+          <strong>POST /analysis:</strong>
+          <p>Uploads a skin image (<code>multipart/form-data</code>) and returns analysis results with detected conditions and metrics.</p>
+        </li>
+      </ul>
+      <h3>Recommendations</h3>
+      <ul>
+        <li>
+          <strong>GET /recommendations:</strong>
+          <p>Returns personalized skincare product suggestions, optionally filtered by <code>analysis_id</code>.</p>
+        </li>
+      </ul>
+      <h3>Appointments</h3>
+      <ul>
+        <li>
+          <strong>POST /appointments:</strong>
+          <p>Books an appointment using JSON data (e.g., <code>date</code>, <code>specialist ID</code>).</p>
+        </li>
+        <li>
+          <strong>GET /appointments:</strong>
+          <p>Retrieves a list of user appointments.</p>
+        </li>
+      </ul>
+      <h3>User Profile</h3>
+      <ul>
+        <li>
+          <strong>GET /users/me:</strong>
+          <p>Fetches the current user's profile details.</p>
+        </li>
+        <li>
+          <strong>PUT /users/me:</strong>
+          <p>Updates user profile information.</p>
+        </li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="system-architecture">
+      <h2>6. System Architecture</h2>
+      <p>A high-level overview of the system architecture:</p>
+      <ul>
+        <li><strong>Client Layer:</strong> User interfaces for image upload, analysis results, and appointment scheduling.</li>
+        <li><strong>Backend Layer:</strong> Orchestrates API calls, ML model invocations, and database interactions.</li>
+        <li><strong>ML Layer:</strong> Custom CNN and YOLOv8 for skin analysis and condition detection.</li>
+        <li><strong>Data Layer:</strong> PostgreSQL and Redis for persistent storage and caching.</li>
+        <li><strong>Cloud Integration:</strong> Secure storage and scalable deployment using cloud services.</li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="database-schema">
+      <h2>7. Database Schema</h2>
+      <h3>Main Entities</h3>
+      <ul>
+        <li>
+          <strong>Users:</strong>
+          <p>Stores account details and profile information.</p>
+          <pre><code>CREATE TABLE users (
+  user_id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  skin_type VARCHAR(20),
+  allergies TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</code></pre>
+        </li>
+        <li>
+          <strong>Analyses:</strong>
+          <p>Records skin analysis details linked to users.</p>
+          <pre><code>CREATE TABLE analyses (
+  analysis_id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  result JSONB NOT NULL,
+  analyzed_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</code></pre>
+        </li>
+        <li>
+          <strong>Products:</strong>
+          <p>Contains information about skincare products.</p>
+          <pre><code>CREATE TABLE products (
+  product_id SERIAL PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  brand VARCHAR(100),
+  category VARCHAR(50),
+  description TEXT,
+  ingredients TEXT,
+  image_url TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</code></pre>
+        </li>
+        <li>
+          <strong>Recommendations:</strong>
+          <p>Maps analyses to recommended products.</p>
+          <pre><code>CREATE TABLE recommendations (
+  analysis_id INT NOT NULL REFERENCES analyses(analysis_id) ON DELETE CASCADE,
+  product_id INT NOT NULL REFERENCES products(product_id),
+  PRIMARY KEY (analysis_id, product_id)
+);</code></pre>
+        </li>
+        <li>
+          <strong>Appointments:</strong>
+          <p>Manages bookings between users and specialists.</p>
+          <pre><code>CREATE TABLE appointments (
+  appointment_id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  specialist_id INT NOT NULL,
+  scheduled_at TIMESTAMP NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'Scheduled'
+);</code></pre>
+        </li>
+      </ul>
+      <p>Refer to the full ERD diagram for a complete view of relationships.</p>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="ai-ml-details">
+      <h2>8. AI/ML Model Details</h2>
+      <h3>Model Architecture</h3>
+      <ul>
+        <li><strong>Core Model:</strong> A custom CNN based on EfficientNet for feature extraction and multi-task analysis.</li>
+        <li><strong>Detection Component:</strong> YOLOv8 for localized detection of skin lesions.</li>
+        <li><strong>Outputs:</strong> Provides both condition classifications and quantitative metrics.</li>
+      </ul>
+      <h3>Training &amp; Performance</h3>
+      <ul>
+        <li><strong>Dataset:</strong> Trained on 10,000+ augmented skin images.</li>
+        <li><strong>Accuracy:</strong> Approximately 90% with real-time inference (~1 second per image).</li>
+        <li><strong>Enhancements:</strong> Ongoing model improvements and retraining with additional data.</li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="deployment-guide">
+      <h2>9. Deployment Guide</h2>
+      <h3>Infrastructure Setup</h3>
+      <ul>
+        <li>
+          <strong>Cloud Hosting:</strong>
+          <ul>
+            <li>Utilize AWS, GCP, or Azure for production environments.</li>
+            <li>Deploy backend services on EC2 or Kubernetes clusters.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Database:</strong>
+          <ul>
+            <li>Use PostgreSQL managed by AWS RDS or equivalent.</li>
+            <li>Implement Redis for caching and session management.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Storage:</strong>
+          <ul>
+            <li>Securely store assets in AWS S3 with encryption enabled.</li>
+          </ul>
+        </li>
+      </ul>
+      <h3>Deployment Steps</h3>
+      <ol>
+        <li>
+          <strong>Build &amp; Push Docker Image:</strong>
+          <pre><code>docker build -t skintellect-backend:latest .
+docker tag skintellect-backend:latest myregistry.com/skintellect:1.0.0
+docker push myregistry.com/skintellect:1.0.0</code></pre>
+        </li>
+        <li>
+          <strong>Provision Infrastructure:</strong>
+          <p>Utilize Terraform or CloudFormation for server and network provisioning.</p>
+        </li>
+        <li>
+          <strong>Deploy Containers:</strong>
+          <ul>
+            <li>For Kubernetes, configure Deployment and Service manifests.</li>
+            <li>For direct deployments, run containers with Nginx as a reverse proxy.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Database Migration:</strong>
+          <p>Execute migration scripts (e.g., Alembic) to initialize the schema.</p>
+        </li>
+        <li>
+          <strong>CI/CD Integration:</strong>
+          <p>Set up automated pipelines with GitHub Actions to build, test, and deploy updates seamlessly.</p>
+        </li>
+      </ol>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="security-monitoring">
+      <h2>10. Security &amp; Monitoring</h2>
+      <h3>Security Best Practices</h3>
+      <ul>
+        <li>
+          <strong>Authentication &amp; Authorization:</strong>
+          <ul>
+            <li>Enforce HTTPS/TLS for all data transmissions.</li>
+            <li>Implement JWT tokens and role-based access controls.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Data Protection:</strong>
+          <ul>
+            <li>Encrypt sensitive data; hash passwords with bcrypt.</li>
+            <li>Sanitize and validate all user inputs.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>File Handling:</strong>
+          <ul>
+            <li>Validate image file types and sizes prior to processing.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Access Control:</strong>
+          <ul>
+            <li>Restrict users to their own data and resources.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Auditing:</strong>
+          <ul>
+            <li>Conduct regular security audits and penetration tests.</li>
+          </ul>
+        </li>
+      </ul>
+      <h3>Monitoring &amp; Logging</h3>
+      <ul>
+        <li>
+          <strong>Logging:</strong>
+          <ul>
+            <li>Use structured logging for all system events and errors.</li>
+            <li>Aggregate logs with CloudWatch, ELK, or similar solutions.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Performance Monitoring:</strong>
+          <ul>
+            <li>Leverage APM tools such as Datadog to monitor latency and error rates.</li>
+            <li>Custom metrics for image analysis throughput and appointment bookings.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Alerts:</strong>
+          <ul>
+            <li>Configure alerts for abnormal system behaviors and security events.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="faqs">
+      <h2>11. FAQs</h2>
+      <ol>
+        <li>
+          <strong>What skin conditions does Skintellect detect?</strong>
+          <p>It analyzes common issues like acne, hyperpigmentation, wrinkles, and general skin health metrics such as oiliness or dryness.</p>
+        </li>
+        <li>
+          <strong>How accurate is the analysis?</strong>
+          <p>The models achieve approximately 90% accuracy on high-quality images.</p>
+        </li>
+        <li>
+          <strong>Is my data secure?</strong>
+          <p>Yes, all communications are secured via HTTPS and sensitive data is encrypted.</p>
+        </li>
+        <li>
+          <strong>How can I book an appointment?</strong>
+          <p>Use the integrated appointment booking feature or the <code>/appointments</code> API endpoint.</p>
+        </li>
+      </ol>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="competitive-analysis">
+      <h2>12. Competitive Analysis</h2>
+      <p>Skintellect distinguishes itself with a holistic and integrated approach:</p>
+      <ul>
+        <li><strong>Comprehensive Solution:</strong> Combines AI-powered analysis, personalized recommendations, and appointment booking.</li>
+        <li><strong>User-Centric Design:</strong> Provides an intuitive experience from self-assessment to professional consultation.</li>
+        <li><strong>Continuous Innovation:</strong> Regular updates and model improvements driven by user feedback and emerging trends.</li>
+        <li><strong>Seamless Integration:</strong> Designed for both consumer use and third-party integrations.</li>
+      </ul>
+      <p>Unlike platforms that focus solely on image analysis or cosmetic suggestions, Skintellect delivers a complete end-to-end skincare solution.</p>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="branding-styling">
+      <h2>13. Branding &amp; Styling</h2>
+      <h3>Visual Identity</h3>
+      <ul>
+        <li><strong>Logo &amp; Colors:</strong> A modern, clean logo paired with a soothing palette exuding professionalism and innovation.</li>
+        <li><strong>Typography:</strong> Crisp, legible fonts with a clear hierarchy to enhance readability.</li>
+        <li><strong>Imagery:</strong> Custom diagrams and visuals to illustrate complex systems and enhance clarity.</li>
+      </ul>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="conclusion">
+      <h2>Conclusion</h2>
+      <p>Skintellect represents a transformative approach to personalized skincare. Leveraging advanced AI and a robust technology stack, it provides actionable insights and seamless integration with professional dermatology services. This documentation offers a detailed roadmap—from installation and API usage to deployment and security—ensuring a clear understanding for developers, investors, and users alike.</p>
+      <p>For additional details, refer to the full repository documentation or contact our team directly.</p>
+    </section>
+  </div>
+</body>
+</html>
