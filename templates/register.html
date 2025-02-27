@@ -1,29 +1,48 @@
 {% extends "layout.html" %}
 {% block title %}Register | SKINTELLECT{% endblock %}
 {% block content %}
-<div class="flex items-center justify-center min-h-screen px-4">
-    <div class="w-full max-w-3xl bg-white/90 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row transform transition-all hover:scale-105">
-        <!-- Left Section (Welcome) -->
-        <div class="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-gradient-to-r from-indigo-900 via-blue-800 to-purple-900 text-white text-center p-8">
-            <i class="fas fa-user-plus text-6xl text-emerald-400 mb-4"></i>
-            <h1 class="text-3xl font-bold">Join SKINTELLECT</h1>
-            <p class="text-blue-100">Begin your personalized skincare journey</p>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-emerald-50 flex items-center p-4">
+    <div class="max-w-6xl w-full mx-auto bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 border border-white/20">
+        <!-- Visual Section -->
+        <div class="hidden lg:flex flex-col items-center justify-center bg-gradient-to-br from-emerald-600 to-teal-600 p-12 relative overflow-hidden">
+            <div class="animate-float">
+                <img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" 
+                     class="w-48 h-48 mb-8 filter drop-shadow-2xl" 
+                     alt="Skincare Products">
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-2">Start Your Journey</h1>
+            <p class="text-emerald-100 text-center">Achieve your skincare goals with AI-powered analysis</p>
+            
+            <!-- Animated Background Elements -->
+            <div class="absolute top-0 left-0 w-full h-full opacity-15">
+                <div class="absolute -top-20 -left-20 w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+                <div class="absolute top-40 -right-20 w-72 h-72 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
+            </div>
         </div>
 
-        <!-- Right Section (Form) -->
-        <div class="w-full md:w-1/2 p-8 flex flex-col">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Create Account</h2>
-            <p class="text-center text-sm text-gray-600 mb-4">
-                Already registered? 
-                <a href="{{ url_for('login') }}" class="text-emerald-500 font-semibold hover:underline">Sign in here</a>
+        <!-- Form Section -->
+        <div class="p-12">
+            <div class="flex justify-center mb-8">
+                <div class="w-20 h-20 bg-emerald-100/80 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm">
+                    <i class="ri-user-add-fill text-4xl text-emerald-600"></i>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-bold text-gray-800 text-center mb-2">Create Account</h2>
+            <p class="text-gray-600 text-center mb-8">
+                Already have an account? 
+                <a href="{{ url_for('login') }}" class="text-emerald-600 font-semibold hover:underline transition-all">Sign in here</a>
             </p>
 
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    <div class="mb-4">
+                    <div class="space-y-4 mb-6">
                         {% for category, message in messages %}
-                            <div class="px-4 py-2 rounded-lg text-white text-center {% if category == 'error' %} bg-red-500 {% else %} bg-green-500 {% endif %}">
+                            <div class="p-4 rounded-lg flex items-center backdrop-blur-sm {% if category == 'error' %}bg-rose-100/90 border border-rose-200 text-rose-700{% else %}bg-emerald-100/90 border border-emerald-200 text-emerald-700{% endif %}">
+                                <i class="ri-{% if category == 'error' %}alert-fill{% else %}checkbox-circle-fill{% endif %} mr-2"></i>
                                 {{ message }}
                             </div>
                         {% endfor %}
@@ -31,76 +50,186 @@
                 {% endif %}
             {% endwith %}
 
-            <form action="{{ url_for('register') }}" method="post" class="space-y-4">
-                <!-- Name Input -->
-                <div class="relative">
-                    <input type="text" name="name" id="name" placeholder="Full Name" required class="input-field">
-                    <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <form class="space-y-6" action="{{ url_for('register') }}" method="post">
+                <!-- Full Name -->
+                <div class="relative group">
+                    <input type="text" name="name" required 
+                           class="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all peer bg-white/50 backdrop-blur-sm"
+                           placeholder=" ">
+                    <label class="absolute left-12 top-3.5 text-gray-400 pointer-events-none transition-all 
+                                peer-placeholder-shown:text-gray-400 
+                                peer-focus:text-emerald-600
+                                peer-focus:-translate-y-5
+                                peer-focus:scale-90
+                                peer-focus:font-medium
+                                peer-[:not(:placeholder-shown)]:-translate-y-5
+                                peer-[:not(:placeholder-shown)]:scale-90">
+                        Full Name
+                    </label>
+                    <i class="ri-user-5-line absolute left-4 top-4 text-gray-400"></i>
                 </div>
 
                 <!-- Age & Username -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="relative">
-                        <input type="number" name="age" id="age" placeholder="Age" min="13" required class="input-field">
-                        <i class="fas fa-birthday-cake absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="relative group">
+                        <input type="number" name="age" min="13" required 
+                               class="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all peer bg-white/50 backdrop-blur-sm"
+                               placeholder=" ">
+                        <label class="absolute left-12 top-3.5 text-gray-400 pointer-events-none transition-all 
+                                    peer-placeholder-shown:text-gray-400 
+                                    peer-focus:text-emerald-600
+                                    peer-focus:-translate-y-5
+                                    peer-focus:scale-90
+                                    peer-focus:font-medium
+                                    peer-[:not(:placeholder-shown)]:-translate-y-5
+                                    peer-[:not(:placeholder-shown)]:scale-90">
+                            Age
+                        </label>
+                        <i class="ri-calendar-event-line absolute left-4 top-4 text-gray-400"></i>
                     </div>
-                    <div class="relative">
-                        <input type="text" name="username" id="username" placeholder="Username" required class="input-field">
-                        <i class="fas fa-at absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+
+                    <div class="relative group">
+                        <input type="text" name="username" required 
+                               class="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all peer bg-white/50 backdrop-blur-sm"
+                               placeholder=" ">
+                        <label class="absolute left-12 top-3.5 text-gray-400 pointer-events-none transition-all 
+                                    peer-placeholder-shown:text-gray-400 
+                                    peer-focus:text-emerald-600
+                                    peer-focus:-translate-y-5
+                                    peer-focus:scale-90
+                                    peer-focus:font-medium
+                                    peer-[:not(:placeholder-shown)]:-translate-y-5
+                                    peer-[:not(:placeholder-shown)]:scale-90">
+                            Username
+                        </label>
+                        <i class="ri-at-line absolute left-4 top-4 text-gray-400"></i>
                     </div>
                 </div>
 
-                <!-- Email Input -->
-                <div class="relative">
-                    <input type="email" name="email" id="email" placeholder="Email Address" required class="input-field">
-                    <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <!-- Email -->
+                <div class="relative group">
+                    <input type="email" name="email" required 
+                           class="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all peer bg-white/50 backdrop-blur-sm"
+                           placeholder=" ">
+                    <label class="absolute left-12 top-3.5 text-gray-400 pointer-events-none transition-all 
+                                peer-placeholder-shown:text-gray-400 
+                                peer-focus:text-emerald-600
+                                peer-focus:-translate-y-5
+                                peer-focus:scale-90
+                                peer-focus:font-medium
+                                peer-[:not(:placeholder-shown)]:-translate-y-5
+                                peer-[:not(:placeholder-shown)]:scale-90">
+                        Email Address
+                    </label>
+                    <i class="ri-mail-line absolute left-4 top-4 text-gray-400"></i>
                 </div>
 
                 <!-- Doctor Checkbox -->
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" name="is_doctor" id="is_doctor" class="rounded border-gray-300 text-emerald-400 focus:ring-emerald-400">
-                    <label for="is_doctor" class="text-gray-600">I am a doctor</label>
+                <div class="flex items-center gap-3 p-3 bg-emerald-50/80 rounded-lg backdrop-blur-sm border border-emerald-100">
+                    <input type="checkbox" name="is_doctor" id="is_doctor" 
+                           class="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500">
+                    <label for="is_doctor" class="text-gray-600 flex items-center gap-2">
+                        <i class="ri-stethoscope-line text-emerald-600"></i>
+                        I am a medical professional
+                    </label>
                 </div>
 
-                <!-- Password Input -->
-                <div class="relative">
-                    <input type="password" name="password" id="password" placeholder="Create Password" minlength="8" required class="input-field">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <!-- Password -->
+                <div class="relative group">
+                    <input type="password" name="password" required 
+                           class="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all peer bg-white/50 backdrop-blur-sm"
+                           placeholder=" ">
+                    <label class="absolute left-12 top-3.5 text-gray-400 pointer-events-none transition-all 
+                                peer-placeholder-shown:text-gray-400 
+                                peer-focus:text-emerald-600
+                                peer-focus:-translate-y-5
+                                peer-focus:scale-90
+                                peer-focus:font-medium
+                                peer-[:not(:placeholder-shown)]:-translate-y-5
+                                peer-[:not(:placeholder-shown)]:scale-90">
+                        Password
+                    </label>
+                    <i class="ri-lock-password-line absolute left-4 top-4 text-gray-400"></i>
                 </div>
 
-                <!-- Password Guidelines -->
-                <div class="text-sm text-gray-600 mb-4 space-y-2">
-                    <p class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> Minimum 8 characters</p>
-                    <p class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> At least 1 number</p>
-                    <p class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> Special character</p>
+                <!-- Password Strength -->
+                <div class="space-y-2">
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="strength-bar" class="h-full transition-all duration-500 w-0"></div>
+                    </div>
+                    <div class="text-sm text-gray-600 flex justify-between">
+                        <span>Password Strength: <span id="strength-text" class="font-medium">Weak</span></span>
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit"
-                    class="w-full bg-gradient-to-r from-emerald-400 to-blue-300 text-white font-semibold py-3 rounded-lg hover:from-emerald-300 hover:to-blue-200 transition-all shadow-md">
-                    Create Account
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 rounded-lg font-semibold
+                               hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 shadow-emerald-100">
+                    Begin Your Journey
                 </button>
+
+                <!-- Terms -->
+                <p class="text-center text-sm text-gray-500">
+                    By creating an account, you agree to our 
+                    <a href="{{ url_for('terms_of_service') }}" class="text-emerald-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                        Terms of Service
+                    </a> and 
+                    <a href="{{ url_for('privacy_policy') }}" class="text-emerald-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                        Privacy Policy
+                    </a>
+                </p>                
             </form>
         </div>
     </div>
 </div>
 
-<!-- Styles -->
+<script>
+document.querySelector('input[name="password"]').addEventListener('input', function(e) {
+    const password = e.target.value;
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    
+    let strength = 0;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^A-Za-z0-9]/)) strength++;
+    if (password.length >= 8) strength++;
+    
+    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+    const texts = ['Weak', 'Fair', 'Good', 'Strong'];
+    
+    strengthBar.style.width = `${(strength/4)*100}%`;
+    strengthBar.style.backgroundColor = colors[strength-1] || '#ef4444';
+    strengthText.textContent = texts[strength-1] || 'Weak';
+    strengthText.style.color = colors[strength-1] || '#ef4444';
+});
+</script>
+
 <style>
-.input-field {
-    width: 100%;
-    padding-left: 2.5rem;
-    padding-right: 1rem;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 0.5rem;
-    outline: none;
-    transition: border 0.3s ease-in-out;
+@keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(3deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
 }
-.input-field:focus {
-    border-color: #34d399; /* Emerald Green */
-    box-shadow: 0 0 5px rgba(52, 211, 153, 0.5);
+
+@keyframes blob {
+    0% { transform: scale(1) rotate(0deg); }
+    33% { transform: scale(1.1) rotate(3deg); }
+    66% { transform: scale(0.9) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-blob {
+    animation: blob 12s infinite linear;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
 }
 </style>
 {% endblock %}
