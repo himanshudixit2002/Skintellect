@@ -4,3 +4,4 @@ output.log
 model/skin_disease_model.h5
 static/skin_uploads/
 static/uploads/
+.env
