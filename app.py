@@ -59,10 +59,8 @@ google_blueprint = make_google_blueprint(
 )
 app.register_blueprint(google_blueprint, url_prefix="/login")
 @app.before_request
-def set_google_tokengetter_once():
-    if not hasattr(app, 'google_token_set'):
-        google.tokengetter = lambda: session.get("google_token")
-        app.google_token_set = True
+def set_google_tokengetter():
+    google.tokengetter = lambda: session.get("google_token")
 
 @app.route("/login/google/authorized")
 def google_authorized():
@@ -81,9 +79,7 @@ def google_authorized():
 
 @app.route("/login/google")
 def google_login():
-    if not google.authorized:
-        return redirect(url_for("google.login"))
-    return redirect(url_for("index"))
+    return redirect(url_for("google.login"))
 
 @app.route("/logout")
 def logout():
