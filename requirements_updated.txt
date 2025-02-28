@@ -25,3 +25,4 @@ python-dotenv
 markdown
 h5py
 gdown
+flask-dance[google]

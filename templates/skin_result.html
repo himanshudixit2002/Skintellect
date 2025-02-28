@@ -2,56 +2,142 @@
 
 {% block content %}
 <style>
+  /* Modern Gradient Background */
   body {
-    /* Dark gradient background matching your site theme */
     background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
+  .container-main {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .results-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+  }
+  .tab-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    color: #5c70d6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .tab-btn.active {
+    background: #5c70d6;
+    color: white;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
   .result-image {
     max-width: 100%;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
+    border: 3px solid rgba(92, 112, 214, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
   }
   #aiAnalysisText {
     white-space: pre-wrap;
     word-wrap: break-word;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 1rem;
-    background: #fefefe;
-    border: 1px solid #ddd;
-    border-radius: 0.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    border: 1px solid rgba(92, 112, 214, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  .analysis-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    transition: transform 0.3s ease;
+  }
+  .analysis-card:hover {
+    transform: translateY(-5px);
   }
 </style>
 
-<div class="min-h-screen flex items-center justify-center px-4 py-16">
-  <div class="w-full max-w-xl bg-white/90 backdrop-blur-md rounded-2xl p-8 shadow-xl">
-    <h1 class="text-center mb-6 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
-      Skin Disease Prediction Result
+<div class="container-main">
+  <div class="w-full" style="max-width: 800px;">
+    <h1 class="text-center mb-6 text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-teal-400">
+      <i class="fas fa-microscope mr-3"></i>DermaDiagnosis
     </h1>
     
-    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
-      <h2 class="text-2xl font-bold mb-2">🔬 Predicted Condition</h2>
-      <p class="text-xl text-green-600" id="predictionText">{{ prediction }}</p>
+    <nav class="results-nav">
+      <button class="tab-btn active" data-tab="diagnosis">🧪 Diagnosis</button>
+      <button class="tab-btn" data-tab="metrics">📊 Metrics</button>
+      <button class="tab-btn" data-tab="analysis">🔍 Analysis</button>
+      <button class="tab-btn" data-tab="preview">📸 Preview</button>
+    </nav>
+    
+    <div class="results-section">
+      <div class="tab-content active" data-tab="diagnosis">
+        <div class="analysis-card fade-in">
+          <h2 class="card-title">Diagnosis Result</h2>
+          <p class="text-2xl font-semibold text-purple-600">{{ prediction }}</p>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="metrics">
+        <div class="analysis-card fade-in">
+          <h2 class="card-title">Confidence Metrics</h2>
+          <div class="bg-indigo-50 p-4 rounded-xl">
+            <pre class="font-mono text-gray-700">{{ probabilities }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="analysis">
+        <div class="analysis-card fade-in">
+          <h2 class="card-title">AI Analysis</h2>
+          <div id="aiAnalysisText" class="leading-relaxed text-gray-700">
+            {{ ai_analysis|safe }}
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="preview">
+        <div class="analysis-card fade-in">
+          <h2 class="card-title">Analysis Preview</h2>
+          <div class="relative group">
+            <img class="result-image transform transition-transform group-hover:scale-105" src="{{ image_url }}" alt="Skin Analysis Visualization">
+          </div>
+        </div>
+      </div>
     </div>
     
-    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
-      <h2 class="text-2xl font-bold mb-2">📊 Prediction Probabilities</h2>
-      <pre id="probabilitiesText">{{ probabilities }}</pre>
-    </div>
-    
-    <div class="mb-4 p-4 rounded-lg shadow-md bg-white">
-      <h2 class="text-2xl font-bold mb-2">🤖 AI Analysis</h2>
-      <div id="aiAnalysisText">{{ ai_analysis|safe }}</div>
-    </div>
-    
-    <div class="mb-6 p-4 rounded-lg shadow-md bg-white">
-      <h2 class="text-2xl font-bold mb-2">🖼️ Uploaded Image</h2>
-      <img id="uploadedImage" class="result-image" src="{{ image_url }}" alt="Uploaded Skin Image">
-    </div>
-    
-    <a href="/skin_predict" class="block text-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all">
-      Try Another Image
+    <a href="/skin_predict" class="btn-blue block text-center py-4 text-xl font-bold">
+      <i class="fas fa-redo mr-2"></i>Analyze Another Image
     </a>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Tab switching functionality
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            const tabId = this.dataset.tab;
+            this.classList.add('active');
+            document.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
+        });
+    });
+    // Activate first tab by default
+    document.querySelector('.tab-btn').click();
+});
+</script>
 {% endblock %}

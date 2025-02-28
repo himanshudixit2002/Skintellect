@@ -2,10 +2,11 @@
 
 {% block content %}
 <style>
-  /* Global Styling */
+  /* Modern Gradient Background */
   body {
-      background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f3f5 0%, #f8f5ff 50%, #fff3fb 100%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
   }
   .container-main {
       min-height: 100vh;
@@ -18,21 +19,23 @@
       font-weight: 700;
   }
 
-  /* Upload Box Styling */
+  /* Modern Upload Box with Glassmorphism */
   .upload-box {
-      background: #ffffff;
-      border: 3px dashed #007BFF;
-      border-radius: 15px;
-      padding: 50px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 2px dashed rgba(92, 112, 214, 0.3);
+      border-radius: 20px;
+      padding: 2rem;
       text-align: center;
-      transition: all 0.4s ease-in-out;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
-      margin-bottom: 20px;
-      position: relative;
+      margin: 2rem 0;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   }
   .upload-box:hover {
-      background: #e9f2ff;
-      border-color: #0056b3;
+      background: rgba(245, 247, 255, 0.9);
+      border-color: #5c70d6;
+      transform: translateY(-2px);
   }
   .upload-box input[type="file"] {
       display: none;
@@ -43,35 +46,59 @@
       margin-top: 10px;
   }
 
-  /* Button Styling */
+  /* Modern Gradient Button */
   .btn-blue {
-      background-color: #007BFF;
+      background: linear-gradient(135deg, #5c70d6 0%, #4b55b8 100%);
       border: none;
-      border-radius: 8px;
-      padding: 12px 30px;
-      font-size: 1.2rem;
+      border-radius: 12px;
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
       color: #fff;
-      transition: all 0.3s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(92, 112, 214, 0.2);
   }
   .btn-blue:hover {
-      background-color: #0056b3;
-      transform: scale(1.05);
+      background: linear-gradient(135deg, #4b55b8 0%, #3f4a9e 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(92, 112, 214, 0.3);
   }
 
-  /* Loader Animation */
+  /* Modern Loader Animation */
   .loader {
       display: none;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007BFF;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 10px auto;
+      position: relative;
+      margin: 20px auto;
   }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+  .loader::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 5px solid;
+      border-color: #5c70d6 #0000;
+      animation: pulse 1.5s ease-in-out infinite;
+      mix-blend-mode: multiply;
+  }
+  .loader::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 5px solid;
+      border-color: #0000 #5c70d6;
+      animation: pulse 1.5s -0.75s ease-in-out infinite;
+      mix-blend-mode: multiply;
+  }
+  @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 0.4; }
   }
 
   /* Results Section */
@@ -86,9 +113,47 @@
       margin-bottom: 20px;
       padding: 20px;
   }
+  /* Tab Navigation */
+  .results-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+  }
+  .tab-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-weight: 600;
+      color: #5c70d6;
+      cursor: pointer;
+      transition: all 0.3s ease;
+  }
+  .tab-btn.active {
+      background: #5c70d6;
+      color: white;
+  }
+  .tab-content {
+      display: none;
+  }
+  .tab-content.active {
+      display: block;
+  }
+  .condition-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+  }
+  .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+  }
   .card-title {
-      color: #007BFF;
-      font-weight: bold;
+      color: #2a2d3b;
+      font-weight: 700;
+      margin-bottom: 1rem;
   }
 
   /* Annotated Image Styling */
@@ -111,9 +176,9 @@
 </style>
 
 <div class="container-main">
-  <div class="w-full" style="max-width: 650px;">
-    <h1 class="text-center mb-4 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-300">
-      AI Skin Analysis
+  <div class="w-full" style="max-width: 800px;">
+    <h1 class="text-center mb-6 text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-teal-400">
+      <i class="fas fa-syringe mr-3"></i>Face Analysis
     </h1>
     
     <!-- Upload Form -->
@@ -133,21 +198,42 @@
 
     <!-- Results Section -->
     <div id="resultsSection" class="results-section">
-      <div class="card-custom fade-in">
-        <h2 class="card-title">🔬 Detected Conditions</h2>
-        <ul id="conditionsList" class="list-group"></ul>
+      <nav class="results-nav">
+        <button class="tab-btn active" data-tab="conditions">🧪 Conditions</button>
+        <button class="tab-btn" data-tab="tips">💡 Skincare Tips</button>
+        <button class="tab-btn" data-tab="products">🛍️ Products</button>
+        <button class="tab-btn" data-tab="analysis">🔍 Analysis</button>
+      </nav>
+      
+      <div class="tab-content active" data-tab="conditions">
+        <div class="card-custom fade-in">
+          <h2 class="card-title">Detected Skin Conditions</h2>
+          <ul id="conditionsList" class="condition-grid"></ul>
+        </div>
       </div>
-      <div class="card-custom fade-in">
-        <h2 class="card-title">💡 Skincare Tips</h2>
-        <p id="aiAnalysis"></p>
+      
+      <div class="tab-content" data-tab="tips">
+        <div class="card-custom fade-in">
+          <h2 class="card-title">Personalized Skincare Recommendations</h2>
+          <div id="aiAnalysis" class="tip-content"></div>
+        </div>
       </div>
-      <div class="card-custom fade-in">
-        <h2 class="card-title">🛍️ Recommended Products</h2>
-        <div id="recommendationsContainer"></div>
+      
+      <div class="tab-content" data-tab="products">
+        <div class="card-custom fade-in">
+          <h2 class="card-title">Recommended Products</h2>
+          <div id="recommendationsContainer" class="product-grid"></div>
+        </div>
       </div>
-      <div class="card-custom fade-in">
-        <h2 class="card-title">🔍 AI Analyzed Image</h2>
-        <img id="annotatedImage" class="annotated-img" src="" alt="Analyzed Image" style="display: none;">
+      
+      <div class="tab-content" data-tab="analysis">
+        <div class="card-custom fade-in">
+          <h2 class="card-title">AI Analysis Visualization</h2>
+          <div class="image-comparison">
+            <img id="originalImage" class="annotated-img" src="" alt="Original Image" style="display: none;">
+            <img id="annotatedImage" class="annotated-img" src="" alt="Analyzed Image" style="display: none;">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -181,6 +267,25 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             fileFeedback.style.display = "none";
         }
+    });
+
+    // Add tab switching functionality
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons and content
+            document.querySelectorAll('.tab-btn').forEach(btn =>
+                btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content =>
+                content.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding content
+            const tabId = this.dataset.tab;
+            this.classList.add('active');
+            document.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Force annotated image refresh if showing analysis tab
+            if(tabId === 'analysis') annotatedImage.style.display = 'block';
+        });
     });
 
     uploadForm.addEventListener("submit", function (event) {

@@ -1,6 +1,5 @@
 app.db
 output.log
-.env
 .venv
 model/skin_disease_model.h5
 static/skin_uploads/

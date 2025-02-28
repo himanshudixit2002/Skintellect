@@ -2,10 +2,11 @@
 
 {% block content %}
 <style>
+  /* Modern Gradient Background */
   body {
-      /* Dark gradient background matching your theme */
-      background: linear-gradient(to bottom right, #312e81, #1e40af, #4c1d95);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f3f5 0%, #f8f5ff 50%, #fff3fb 100%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
   }
   .container-main {
       min-height: 100vh;
@@ -14,49 +15,87 @@
       justify-content: center;
       padding: 20px;
   }
+  h1, h2, h3 {
+      font-weight: 700;
+  }
+  /* Modern Upload Box with Glassmorphism */
   .upload-box {
-      background: #ffffff;
-      border: 3px dashed #007BFF;
-      border-radius: 15px;
-      padding: 50px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 2px dashed rgba(92, 112, 214, 0.3);
+      border-radius: 20px;
+      padding: 2rem;
       text-align: center;
-      transition: all 0.4s ease-in-out;
+      transition: all 0.3s ease;
       cursor: pointer;
-      margin-bottom: 20px;
+      margin: 2rem 0;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   }
   .upload-box:hover {
-      background: #e9f2ff;
-      border-color: #0056b3;
+      background: rgba(245, 247, 255, 0.9);
+      border-color: #5c70d6;
+      transform: translateY(-2px);
   }
   .upload-box input[type="file"] {
       display: none;
   }
+  .file-size-note {
+      font-size: 0.9rem;
+      color: #007BFF;
+      margin-top: 10px;
+  }
+  /* Modern Gradient Button */
   .btn-blue {
-      background-color: #007BFF;
+      background: linear-gradient(135deg, #5c70d6 0%, #4b55b8 100%);
       border: none;
-      border-radius: 8px;
-      padding: 12px 30px;
-      font-size: 1.2rem;
+      border-radius: 12px;
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
       color: #fff;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(92, 112, 214, 0.2);
   }
   .btn-blue:hover {
-      background-color: #0056b3;
-      transform: scale(1.05);
+      background: linear-gradient(135deg, #4b55b8 0%, #3f4a9e 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(92, 112, 214, 0.3);
   }
+  /* Modern Loader Animation */
   .loader {
       display: none;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007BFF;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 10px auto;
+      position: relative;
+      margin: 20px auto;
   }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+  .loader::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 5px solid;
+      border-color: #5c70d6 #0000;
+      animation: pulse 1.5s ease-in-out infinite;
+      mix-blend-mode: multiply;
+  }
+  .loader::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 5px solid;
+      border-color: #0000 #5c70d6;
+      animation: pulse 1.5s -0.75s ease-in-out infinite;
+      mix-blend-mode: multiply;
+  }
+  @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 0.4; }
   }
   .results-section {
       margin-top: 30px;
@@ -83,20 +122,22 @@
     <form id="uploadForm" method="post" enctype="multipart/form-data">
       <div class="upload-box" id="uploadBox">
         <input id="fileInput" type="file" name="image" accept="image/*" required>
-        <h3 class="text-2xl font-semibold">Drag & Drop or Click to Upload</h3>
+        <h3 class="text-2xl font-semibold">Drag &amp; Drop or Click to Upload</h3>
         <p class="text-gray-600">Supported formats: JPG, PNG</p>
-        <p class="file-size-note text-gray-500">Max size: 2MB</p>
+        <p class="file-size-note">Max size: 2MB</p>
+        <p id="fileFeedback" style="display: none;"></p>
       </div>
       <div class="text-center">
-        <button class="btn-blue" type="submit">Predict Disease</button>
+        <button class="btn-blue" type="submit">Analyze Skin</button>
         <div class="loader" id="loadingSpinner"></div>
       </div>
     </form>
 
+    <!-- Results Section (hidden by default) -->
     <div id="resultsSection" class="results-section">
       <div class="card-custom">
         <h2 class="card-title text-2xl font-bold mb-2">🔬 Predicted Condition</h2>
-        <p class="fs-4 text-green-600" id="predictionText">...</p>
+        <p id="predictionText" class="text-2xl text-green-600">...</p>
       </div>
       <div class="card-custom">
         <h2 class="card-title text-2xl font-bold mb-2">📊 Prediction Probabilities</h2>
@@ -119,6 +160,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const uploadBox = document.getElementById("uploadBox");
     const fileInput = document.getElementById("fileInput");
+    const fileFeedback = document.getElementById("fileFeedback");
     const uploadForm = document.getElementById("uploadForm");
     const loadingSpinner = document.getElementById("loadingSpinner");
     const resultsSection = document.getElementById("resultsSection");
@@ -127,13 +169,28 @@ document.addEventListener("DOMContentLoaded", function () {
     const aiAnalysisText = document.getElementById("aiAnalysisText");
     const uploadedImage = document.getElementById("uploadedImage");
 
-    // Trigger file input when clicking the box
+    // Trigger file input when clicking the upload box
     uploadBox.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                alert("File too large! Please select a file under 2MB.");
+                fileInput.value = "";
+                return;
+            }
+            fileFeedback.style.display = "block";
+            fileFeedback.textContent = "Selected File: " + file.name;
+        } else {
+            fileFeedback.style.display = "none";
+        }
+    });
 
     uploadForm.addEventListener("submit", function (event) {
         event.preventDefault();
         const formData = new FormData();
-        if(fileInput.files.length === 0) {
+        if (fileInput.files.length === 0) {
             alert("Please select a file");
             return;
         }
@@ -149,7 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
             body: formData
         })
         .then(response => {
-            if(!response.ok) {
+            if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
             return response.json();
